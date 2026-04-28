@@ -5,7 +5,7 @@ from granasimples.core.constants import AZUL_PRINCIPAL, FUNDO_CLARO, VERDE_PRINC
 
 def apply_theme(page: ft.Page) -> None:
     page.title = "GranaSimples"
-    page.bgcolor = "#F8FAFC"
+    page.bgcolor = ft.Colors.WHITE
     page.theme = ft.Theme(color_scheme_seed=AZUL_PRINCIPAL)
     page.padding = 0
     page.window_min_width = 980

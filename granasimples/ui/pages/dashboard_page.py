@@ -11,16 +11,7 @@ class DashboardPage:
         self.dashboard = DashboardService()
 
     def build(self) -> ft.Control:
-        try:
-            resumo = self.dashboard.resumo_mes_atual()
-            top_categorias = self.dashboard.top_categorias_despesa()
-            ultimos = self.dashboard.ultimos_lancamentos()
-        except Exception as exc:
-            print(f"[GranaSimples][Dashboard] Falha ao carregar dados: {exc}")
-            resumo = {"receitas": 0, "despesas": 0, "saldo": 0, "cartoes": 0}
-            top_categorias = []
-            ultimos = []
-        has_data = any(float(resumo.get(key, 0)) for key in ["receitas", "despesas", "saldo", "cartoes"])
+        resumo, top_categorias = self._load_data()
 
         return ft.Column(
             [
@@ -28,119 +19,67 @@ class DashboardPage:
                 ft.Text("Controle financeiro simples, rapido e sem complicacao.", color="#64748B", size=15),
                 ft.Row(
                     [
-                        self._metric("Receita do mes", money(resumo["receitas"]), SUCCESS_COLOR, "#ECFDF5", ft.Icons.ARROW_UPWARD),
-                        self._metric("Despesa do mes", money(resumo["despesas"]), "#DC2626", "#FEF2F2", ft.Icons.ARROW_DOWNWARD),
-                        self._metric("Saldo do mes", money(resumo["saldo"]), "#334155", "#F1F5F9", ft.Icons.ACCOUNT_BALANCE_WALLET_OUTLINED),
-                        self._metric("Gasto no cartao", money(resumo["cartoes"]), "#2563EB", "#EFF6FF", ft.Icons.CREDIT_CARD),
+                        self._metric("Receitas do mes", resumo["receitas"], SUCCESS_COLOR),
+                        self._metric("Despesas do mes", resumo["despesas"], "#DC2626"),
+                        self._metric("Saldo do mes", resumo["saldo"], "#334155"),
+                        self._metric("Gasto no cartao", resumo["cartoes"], "#2563EB"),
                     ],
                     wrap=True,
-                    spacing=18,
-                    run_spacing=18,
+                    spacing=16,
+                    run_spacing=16,
                 ),
-                *([] if has_data else [ft.Text("Nenhum dado no mes atual. Cadastre lancamentos para atualizar os indicadores.", color="#64748B", size=14)]),
-                ft.ResponsiveRow(
-                    [
-                        ft.Container(
-                            card(
-                                ft.Column(
-                                    [
-                                        ft.Text("Top 3 categorias de despesa", size=16, weight=ft.FontWeight.BOLD),
-                                        *(self._category_bars(top_categorias) or [ft.Text("Nenhuma despesa no mes atual.", color="#6B7280")]),
-                                    ],
-                                    spacing=14,
-                                ),
-                            ),
-                            col={"sm": 12, "md": 6},
-                        ),
-                        ft.Container(
-                            card(
-                                ft.Column(
-                                    [
-                                        ft.Text("Ultimos lancamentos", size=16, weight=ft.FontWeight.BOLD),
-                                        *(self._recent_rows(ultimos) or [ft.Text("Nenhum lancamento ativo.", color="#6B7280")]),
-                                    ],
-                                    spacing=12,
-                                ),
-                            ),
-                            col={"sm": 12, "md": 6},
-                        ),
-                    ],
-                    spacing=18,
-                    run_spacing=18,
+                card(
+                    ft.Column(
+                        [
+                            ft.Text("Top 3 categorias", size=16, weight=ft.FontWeight.BOLD, color="#0F172A"),
+                            *(self._category_rows(top_categorias) or [ft.Text("Nenhuma despesa no mes atual.", color="#64748B")]),
+                        ],
+                        spacing=12,
+                    )
                 ),
             ],
-            spacing=22,
+            spacing=20,
             scroll=ft.ScrollMode.AUTO,
         )
 
-    def _metric(self, title: str, value: str, color: str, icon_bg: str, icon: str) -> ft.Container:
+    def _load_data(self) -> tuple[dict[str, float], list[dict]]:
+        try:
+            resumo = self.dashboard.resumo_mes_atual()
+            top_categorias = self.dashboard.top_categorias_despesa()
+            return {
+                "receitas": float(resumo.get("receitas", 0)),
+                "despesas": float(resumo.get("despesas", 0)),
+                "saldo": float(resumo.get("saldo", 0)),
+                "cartoes": float(resumo.get("cartoes", 0)),
+            }, top_categorias
+        except Exception as exc:
+            print(f"[GranaSimples][Dashboard] Falha ao carregar dados: {exc}")
+            return {"receitas": 0, "despesas": 0, "saldo": 0, "cartoes": 0}, []
+
+    def _metric(self, title: str, value: float, color: str) -> ft.Container:
         metric = card(
             ft.Column(
                 [
-                    ft.Container(
-                        ft.Icon(icon, color=color, size=22),
-                        bgcolor=icon_bg,
-                        border_radius=10,
-                        padding=10,
-                    ),
                     ft.Text(title, color="#64748B", size=13, weight=ft.FontWeight.W_500),
-                    ft.Text(value, size=27, weight=ft.FontWeight.BOLD, color=color),
+                    ft.Text(money(value), size=27, weight=ft.FontWeight.BOLD, color=color),
                 ],
-                spacing=12,
-            ),
+                spacing=10,
+            )
         )
         metric.width = 245
-        metric.height = 150
+        metric.height = 120
         return metric
 
-    def _category_bars(self, items: list[dict]) -> list[ft.Control]:
-        if not items:
-            return []
-        max_total = max(float(item["total"]) for item in items) or 1
-        rows = []
-        for item in items:
-            total = float(item["total"])
-            rows.append(
-                ft.Column(
-                    [
-                        ft.Row(
-                            [
-                                ft.Text(item["nome"], expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, color="#334155"),
-                                ft.Text(money(total), weight=ft.FontWeight.BOLD, color="#DC2626"),
-                            ]
-                        ),
-                        ft.ProgressBar(value=total / max_total, color="#DC2626", bgcolor="#FEE2E2", height=8),
-                    ],
-                    spacing=5,
-                )
-            )
-        return rows
-
-    def _recent_rows(self, items: list[dict]) -> list[ft.Control]:
-        rows = []
-        for item in items:
-            color = SUCCESS_COLOR if item["tipo"] == "receita" else "#DC2626"
-            sinal = "+" if item["tipo"] == "receita" else "-"
+    def _category_rows(self, items: list[dict]) -> list[ft.Control]:
+        rows: list[ft.Control] = []
+        for item in items[:3]:
             rows.append(
                 ft.Row(
                     [
-                        ft.Column(
-                            [
-                                ft.Text(
-                                    item["categoria_nome"],
-                                    no_wrap=True,
-                                    overflow=ft.TextOverflow.ELLIPSIS,
-                                    weight=ft.FontWeight.W_500,
-                                    color="#334155",
-                                ),
-                                ft.Text(item["data"], size=12, color="#64748B"),
-                            ],
-                            spacing=2,
-                            expand=True,
-                        ),
-                        ft.Text(f"{sinal} {money(item['valor'])}", color=color, weight=ft.FontWeight.BOLD),
+                        ft.Text(str(item["nome"]), expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, color="#334155"),
+                        ft.Text(money(item["total"]), weight=ft.FontWeight.BOLD, color="#DC2626"),
                     ],
-                    spacing=10,
+                    spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             )
