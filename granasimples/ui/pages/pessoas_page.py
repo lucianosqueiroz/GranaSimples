@@ -77,13 +77,13 @@ class PessoasPage:
 
                 def remover(item=item):
                     print(f"[GranaSimples][UI] Remover pessoa id={item['id']}")
-                    self.service.remove(item["id"])
-                    show_message(self.page, "Pessoa/Centro de Custo removido ou inativado.")
+                    action = self.service.remove(item["id"])
+                    show_message(self.page, "Pessoa/Centro de Custo excluido." if action == "deleted" else "Pessoa/Centro de Custo inativado.")
                     refresh_rows()
 
                 def alternar(item=item):
                     self.service.set_active(item["id"], not bool(item["ativo"]))
-                    show_message(self.page, "Status atualizado.")
+                    show_message(self.page, "Registro reativado." if not bool(item["ativo"]) else "Registro inativado.")
                     refresh_rows()
 
                 rows.append(

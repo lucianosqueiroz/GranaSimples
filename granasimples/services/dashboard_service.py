@@ -16,3 +16,6 @@ class DashboardService:
     def top_categorias_despesa(self) -> list[dict]:
         hoje = date.today()
         return self.lancamentos.top_categorias_despesa_mes(hoje.year, hoje.month)
+
+    def ultimos_lancamentos(self, limit: int = 5) -> list[dict]:
+        return self.lancamentos.list_all(True)[:limit]

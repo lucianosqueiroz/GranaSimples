@@ -9,7 +9,7 @@ from granasimples.services.conta_service import ContaService
 from granasimples.services.lancamento_service import LancamentoService
 from granasimples.services.pessoa_service import PessoaService
 from granasimples.services.subcategoria_service import SubcategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, header_cell, section_title, show_message, table_header
+from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, header_cell, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import SUCCESS_COLOR, card, money, primary_button
 
 
@@ -84,6 +84,16 @@ class LancamentosPage:
             ],
             width=140,
         )
+        filtro_status = ft.Dropdown(
+            label="Status",
+            value="ativos",
+            options=[
+                ft.dropdown.Option("ativos", "Ativos"),
+                ft.dropdown.Option("inativos", "Inativos"),
+                ft.dropdown.Option("todos", "Todos"),
+            ],
+            width=130,
+        )
 
         fields = [
             tipo,
@@ -154,12 +164,18 @@ class LancamentosPage:
                         header_cell("Subcategoria", width=120),
                         header_cell("Meio financeiro", expand=True),
                         header_cell("Valor", width=130),
-                        header_cell("Ações", width=48),
+                        header_cell("Status", width=76),
+                        header_cell("Ações", width=96),
                     ]
                 )
             ]
             filtro = (filtro_texto.value or "").lower().strip()
-            items = self.service.list_all()
+            items = self.service.list_all(False)
+            status = filtro_status.value or "ativos"
+            if status == "ativos":
+                items = [item for item in items if bool(item["ativo"])]
+            elif status == "inativos":
+                items = [item for item in items if not bool(item["ativo"])]
             if filtro_tipo.value:
                 items = [item for item in items if item["tipo"] == filtro_tipo.value]
             if filtro:
@@ -196,6 +212,15 @@ class LancamentosPage:
                     except Exception as exc:
                         show_message(self.page, str(exc), True)
 
+                def alternar(item=item):
+                    try:
+                        self.service.set_active(item["id"], not bool(item["ativo"]))
+                        show_message(self.page, "Lancamento reativado." if not bool(item["ativo"]) else "Lancamento inativado.")
+                        refresh_list()
+                        self.refresh_app()
+                    except Exception as exc:
+                        show_message(self.page, str(exc), True)
+
                 rows.append(
                     ft.Container(
                         content=ft.Row(
@@ -212,6 +237,8 @@ class LancamentosPage:
                                 ellipsis_text(item["subcategoria_nome"] or "-", width=120, color="#6B7280"),
                                 ellipsis_text(destino or item["meio_financeiro"], expand=True, color="#374151"),
                                 ellipsis_text(f"{sinal} {money(item['valor'])}", width=130, color=color, weight=ft.FontWeight.BOLD),
+                                status_label(bool(item["ativo"])),
+                                toggle_active_button(bool(item["ativo"]), lambda _, alternar=alternar: alternar()),
                                 delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
                             ],
                             vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -273,6 +300,7 @@ class LancamentosPage:
         valor.on_blur = on_valor_blur
         filtro_texto.on_change = lambda _: refresh_list()
         filtro_tipo.on_change = lambda _: refresh_list()
+        filtro_status.on_change = lambda _: refresh_list()
 
         update_dynamic_fields(update_page=False)
         refresh_list(update_page=False)
@@ -324,7 +352,7 @@ class LancamentosPage:
                             ft.Column(
                                 [
                                     ft.Text("Últimos lançamentos", weight=ft.FontWeight.BOLD, size=16),
-                                    ft.Row([filtro_texto, filtro_tipo], wrap=True, spacing=10),
+                                    ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10),
                                     self.list_container,
                                 ],
                                 spacing=12,

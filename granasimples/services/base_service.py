@@ -10,14 +10,16 @@ class BaseCrudService:
     def get_by_id(self, item_id: int) -> dict[str, Any] | None:
         return self.repository.get_by_id(item_id)
 
-    def remove(self, item_id: int) -> None:
+    def remove(self, item_id: int) -> str:
         print(f"[GranaSimples][Service] Solicitação de remoção id={item_id}")
         if self.repository.has_links(item_id):
             print(f"[GranaSimples][Service] Registro id={item_id} tem vínculo. Será inativado.")
             self.repository.inactivate(item_id)
+            return "inactivated"
         else:
             print(f"[GranaSimples][Service] Registro id={item_id} sem vínculo. Será excluído fisicamente.")
             self.repository.delete(item_id)
+            return "deleted"
 
     def set_active(self, item_id: int, active: bool) -> None:
         print(f"[GranaSimples][Service] Alterando status id={item_id} active={active}")

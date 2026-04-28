@@ -1,7 +1,7 @@
 import flet as ft
 
 from granasimples.services.cartao_service import CartaoService
-from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, section_title, show_message, table_header, toggle_active_button
+from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import card, money, primary_button
 
 
@@ -48,6 +48,7 @@ class CartoesPage:
                         header_cell("Fech.", width=58),
                         header_cell("Limite", width=112),
                         header_cell("Usado", width=112),
+                        header_cell("Status", width=76),
                         header_cell("Ações", width=96),
                     ]
                 )
@@ -65,13 +66,13 @@ class CartoesPage:
 
                 def remover(item=item):
                     print(f"[GranaSimples][UI] Remover cartão id={item['id']}")
-                    self.service.remove(item["id"])
-                    show_message(self.page, "Cartão removido ou inativado.")
+                    action = self.service.remove(item["id"])
+                    show_message(self.page, "Cartao excluido." if action == "deleted" else "Cartao inativado.")
                     refresh_rows()
 
                 def alternar(item=item):
                     self.service.set_active(item["id"], not bool(item["ativo"]))
-                    show_message(self.page, "Status atualizado.")
+                    show_message(self.page, "Registro reativado." if not bool(item["ativo"]) else "Registro inativado.")
                     refresh_rows()
 
                 rows.append(
@@ -83,6 +84,7 @@ class CartoesPage:
                             ellipsis_text(str(item["dia_fechamento"]), width=58),
                             ellipsis_text(money(item["limite_total"]), width=112),
                             ellipsis_text(money(item["limite_usado"]), width=112),
+                            status_label(bool(item["ativo"])),
                             edit_button(editar),
                             toggle_active_button(bool(item["ativo"]), lambda _, alternar=alternar: alternar()),
                             delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),

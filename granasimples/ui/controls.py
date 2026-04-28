@@ -68,7 +68,7 @@ def edit_button(on_click) -> ft.IconButton:
 def delete_button(on_click) -> ft.IconButton:
     return ft.IconButton(
         ft.Icons.DELETE_OUTLINE,
-        tooltip="Remover",
+        tooltip="Remover ou inativar",
         icon_color="#94A3B8",
         icon_size=18,
         on_click=on_click,
@@ -78,7 +78,7 @@ def delete_button(on_click) -> ft.IconButton:
 def toggle_active_button(active: bool, on_click) -> ft.IconButton:
     return ft.IconButton(
         ft.Icons.TOGGLE_ON_OUTLINED if active else ft.Icons.TOGGLE_OFF_OUTLINED,
-        tooltip="Inativar" if active else "Reativar",
+        tooltip="Inativar registro" if active else "Reativar registro",
         icon_color="#16A34A" if active else "#94A3B8",
         icon_size=20,
         on_click=on_click,
@@ -101,7 +101,7 @@ def filter_rows(rows: list[dict], text: str = "", tipo: str = "", status: str = 
     return result
 
 
-def confirm_delete(page: ft.Page, on_confirm, message: str = "Tem certeza que deseja excluir?") -> None:
+def confirm_delete(page: ft.Page, on_confirm, message: str = "Sem vinculos, o registro sera excluido. Com vinculos, sera inativado.") -> None:
     dialog = ft.AlertDialog(
         modal=True,
         title=ft.Text("Confirmar exclusão"),
@@ -109,7 +109,7 @@ def confirm_delete(page: ft.Page, on_confirm, message: str = "Tem certeza que de
         actions=[
             ft.TextButton("Cancelar", on_click=lambda _: _close_dialog(page, dialog)),
             ft.ElevatedButton(
-                "Excluir",
+                "Confirmar",
                 bgcolor=ft.Colors.RED_600,
                 color=ft.Colors.WHITE,
                 on_click=lambda _: _confirm_and_close(page, dialog, on_confirm),

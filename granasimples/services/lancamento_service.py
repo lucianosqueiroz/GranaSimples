@@ -20,8 +20,8 @@ class LancamentoService:
         self.cartoes = CartaoRepository()
         self.pessoas = PessoaRepository()
 
-    def list_all(self) -> list[dict]:
-        return self.repository.list_all()
+    def list_all(self, only_active: bool = True) -> list[dict]:
+        return self.repository.list_all(only_active)
 
     def save(
         self,
@@ -61,6 +61,18 @@ class LancamentoService:
             return
         self._reverter_movimento(lancamento)
         self.repository.inactivate(item_id)
+
+    def set_active(self, item_id: int, active: bool) -> None:
+        lancamento = self.repository.get_by_id(item_id)
+        if not lancamento:
+            return
+        is_active = bool(lancamento["ativo"])
+        if active and not is_active:
+            self._aplicar_movimento_dict(lancamento)
+            self.repository.activate(item_id)
+        elif not active and is_active:
+            self._reverter_movimento(lancamento)
+            self.repository.inactivate(item_id)
 
     def totais_mes(self, ano: int, mes: int) -> dict[str, float]:
         return self.repository.totais_mes(ano, mes)
@@ -135,6 +147,12 @@ class LancamentoService:
             return
         delta = lancamento.valor if lancamento.tipo == TIPO_RECEITA else -lancamento.valor
         self.contas.update_saldo(lancamento.conta_id, delta)
+
+    def _aplicar_movimento_dict(self, lancamento: dict) -> None:
+        if lancamento["meio_financeiro"] != MEIO_CONTA or not lancamento["conta_id"]:
+            return
+        delta = lancamento["valor"] if lancamento["tipo"] == TIPO_RECEITA else -lancamento["valor"]
+        self.contas.update_saldo(lancamento["conta_id"], delta)
 
     def _reverter_movimento(self, lancamento: dict) -> None:
         if lancamento["meio_financeiro"] != MEIO_CONTA or not lancamento["conta_id"]:

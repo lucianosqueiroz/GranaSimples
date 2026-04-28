@@ -91,13 +91,13 @@ class ContasPage:
 
                 def remover(item=item):
                     print(f"[GranaSimples][UI] Remover conta id={item['id']}")
-                    self.service.remove(item["id"])
-                    show_message(self.page, "Conta removida ou inativada.")
+                    action = self.service.remove(item["id"])
+                    show_message(self.page, "Conta excluida." if action == "deleted" else "Conta inativada.")
                     refresh_rows()
 
                 def alternar(item=item):
                     self.service.set_active(item["id"], not bool(item["ativo"]))
-                    show_message(self.page, "Status atualizado.")
+                    show_message(self.page, "Registro reativado." if not bool(item["ativo"]) else "Registro inativado.")
                     refresh_rows()
 
                 rows.append(

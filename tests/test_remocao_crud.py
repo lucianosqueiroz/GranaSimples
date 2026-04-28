@@ -41,11 +41,11 @@ def test_remove_sem_vinculo_exclui_fisicamente(tmp_path, monkeypatch):
     subcategoria_id = s["subcategorias"].save(categoria_id, "Mercado")
     cartao_id = s["cartoes"].save("Cartão", "1234", 20, "", 1000)
 
-    s["pessoas"].remove(pessoa_id)
-    s["contas"].remove(conta_id)
-    s["subcategorias"].remove(subcategoria_id)
-    s["categorias"].remove(categoria_id)
-    s["cartoes"].remove(cartao_id)
+    assert s["pessoas"].remove(pessoa_id) == "deleted"
+    assert s["contas"].remove(conta_id) == "deleted"
+    assert s["subcategorias"].remove(subcategoria_id) == "deleted"
+    assert s["categorias"].remove(categoria_id) == "deleted"
+    assert s["cartoes"].remove(cartao_id) == "deleted"
 
     assert count(s["database"], "pessoas") == 0
     assert count(s["database"], "contas") == 0
@@ -82,14 +82,39 @@ def test_remove_com_vinculo_inativa(tmp_path, monkeypatch):
         cartao_id=cartao_id,
     )
 
-    s["pessoas"].remove(pessoa_id)
-    s["contas"].remove(conta_id)
-    s["subcategorias"].remove(subcategoria_id)
-    s["categorias"].remove(categoria_id)
-    s["cartoes"].remove(cartao_id)
+    assert s["pessoas"].remove(pessoa_id) == "inactivated"
+    assert s["contas"].remove(conta_id) == "inactivated"
+    assert s["subcategorias"].remove(subcategoria_id) == "inactivated"
+    assert s["categorias"].remove(categoria_id) == "inactivated"
+    assert s["cartoes"].remove(cartao_id) == "inactivated"
 
     assert not s["pessoas"].get_by_id(pessoa_id)["ativo"]
     assert not s["contas"].get_by_id(conta_id)["ativo"]
     assert not s["subcategorias"].get_by_id(subcategoria_id)["ativo"]
     assert not s["categorias"].get_by_id(categoria_id)["ativo"]
     assert not s["cartoes"].get_by_id(cartao_id)["ativo"]
+
+
+def test_inativar_e_reativar_lancamento_reverte_e_reaplica_saldo(tmp_path, monkeypatch):
+    s = setup_services(tmp_path, monkeypatch)
+    conta_id = s["contas"].save("Banco", "Conta", 500)
+    categoria_id = s["categorias"].save("Salario", "receita")
+
+    lancamento_id = s["lancamentos"].save(
+        "receita",
+        "conta",
+        "2026-04-27",
+        100,
+        categoria_id,
+        conta_id=conta_id,
+    )
+
+    assert s["contas"].get_by_id(conta_id)["saldo_atual"] == 600
+
+    s["lancamentos"].set_active(lancamento_id, False)
+    assert not s["lancamentos"].repository.get_by_id(lancamento_id)["ativo"]
+    assert s["contas"].get_by_id(conta_id)["saldo_atual"] == 500
+
+    s["lancamentos"].set_active(lancamento_id, True)
+    assert s["lancamentos"].repository.get_by_id(lancamento_id)["ativo"]
+    assert s["contas"].get_by_id(conta_id)["saldo_atual"] == 600
