@@ -62,6 +62,15 @@ class LancamentoService:
         self._reverter_movimento(lancamento)
         self.repository.inactivate(item_id)
 
+    def remove(self, item_id: int) -> str:
+        lancamento = self.repository.get_by_id(item_id)
+        if not lancamento:
+            return "deleted"
+        if lancamento["ativo"]:
+            self._reverter_movimento(lancamento)
+        self.repository.delete(item_id)
+        return "deleted"
+
     def set_active(self, item_id: int, active: bool) -> None:
         lancamento = self.repository.get_by_id(item_id)
         if not lancamento:

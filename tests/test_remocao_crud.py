@@ -118,3 +118,23 @@ def test_inativar_e_reativar_lancamento_reverte_e_reaplica_saldo(tmp_path, monke
     s["lancamentos"].set_active(lancamento_id, True)
     assert s["lancamentos"].repository.get_by_id(lancamento_id)["ativo"]
     assert s["contas"].get_by_id(conta_id)["saldo_atual"] == 600
+
+
+def test_remover_lancamento_exclui_e_reverte_saldo(tmp_path, monkeypatch):
+    s = setup_services(tmp_path, monkeypatch)
+    conta_id = s["contas"].save("Banco", "Conta", 500)
+    categoria_id = s["categorias"].save("Mercado", "despesa")
+
+    lancamento_id = s["lancamentos"].save(
+        "despesa",
+        "conta",
+        "2026-04-27",
+        100,
+        categoria_id,
+        conta_id=conta_id,
+    )
+
+    assert s["contas"].get_by_id(conta_id)["saldo_atual"] == 400
+    assert s["lancamentos"].remove(lancamento_id) == "deleted"
+    assert s["lancamentos"].repository.get_by_id(lancamento_id) is None
+    assert s["contas"].get_by_id(conta_id)["saldo_atual"] == 500

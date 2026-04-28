@@ -101,10 +101,14 @@ def filter_rows(rows: list[dict], text: str = "", tipo: str = "", status: str = 
     return result
 
 
-def confirm_delete(page: ft.Page, on_confirm, message: str = "Sem vinculos, o registro sera excluido. Com vinculos, sera inativado.") -> None:
+def confirm_delete(
+    page: ft.Page,
+    on_confirm,
+    message: str = "Sem vinculos, o registro sera excluido. Com vinculos, sera inativado.",
+) -> None:
     dialog = ft.AlertDialog(
         modal=True,
-        title=ft.Text("Confirmar exclusão"),
+        title=ft.Text("Remover ou inativar"),
         content=ft.Text(message),
         actions=[
             ft.TextButton("Cancelar", on_click=lambda _: _close_dialog(page, dialog)),
@@ -117,27 +121,24 @@ def confirm_delete(page: ft.Page, on_confirm, message: str = "Sem vinculos, o re
         ],
         actions_alignment=ft.MainAxisAlignment.END,
     )
-    if hasattr(page, "open"):
-        page.open(dialog)
-    else:
-        page.dialog = dialog
-        dialog.open = True
-        page.update()
+    _open_dialog(page, dialog)
+
+
+def _open_dialog(page: ft.Page, dialog: ft.AlertDialog) -> None:
+    if hasattr(page, "overlay") and dialog not in page.overlay:
+        page.overlay.append(dialog)
+    page.dialog = dialog
+    dialog.open = True
+    page.update()
 
 
 def _confirm_and_close(page: ft.Page, dialog: ft.AlertDialog, on_confirm) -> None:
-    print("[GranaSimples][UI] Confirmação de exclusão acionada.")
-    if hasattr(page, "close"):
-        page.close(dialog)
-    else:
-        dialog.open = False
+    print("[GranaSimples][UI] Confirmacao de remocao acionada.")
+    dialog.open = False
     on_confirm()
     page.update()
 
 
 def _close_dialog(page: ft.Page, dialog: ft.AlertDialog) -> None:
-    if hasattr(page, "close"):
-        page.close(dialog)
-    else:
-        dialog.open = False
+    dialog.open = False
     page.update()
