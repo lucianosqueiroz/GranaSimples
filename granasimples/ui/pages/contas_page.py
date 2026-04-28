@@ -27,15 +27,11 @@ class ContasPage:
         )
         saldo = ft.TextField(label="Saldo atual", value=money(0), width=320, keyboard_type=ft.KeyboardType.NUMBER)
         filtro_texto = ft.TextField(label="Filtrar", hint_text="Nome ou tipo", width=220)
+        tipos_cadastrados = sorted({str(item["tipo"]) for item in self.service.list_all(False)})
         filtro_tipo = ft.Dropdown(
             label="Tipo",
             value="",
-            options=[
-                ft.dropdown.Option("", "Todos"),
-                ft.dropdown.Option("banco", "Banco"),
-                ft.dropdown.Option("carteira", "Carteira"),
-                ft.dropdown.Option("outro", "Outro"),
-            ],
+            options=[ft.dropdown.Option("", "Todos")] + [ft.dropdown.Option(tipo_item, tipo_item) for tipo_item in tipos_cadastrados],
             width=150,
         )
         filtro_status = ft.Dropdown(
@@ -120,9 +116,9 @@ class ContasPage:
             if update_page:
                 self.page.update()
 
-        filtro_texto.on_change = refresh_rows
-        filtro_tipo.on_change = refresh_rows
-        filtro_status.on_change = refresh_rows
+        filtro_texto.on_change = lambda _: refresh_rows()
+        filtro_tipo.on_change = lambda _: refresh_rows()
+        filtro_status.on_change = lambda _: refresh_rows()
         refresh_rows(False)
 
         return ft.Column(

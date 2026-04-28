@@ -32,32 +32,35 @@ class DashboardPage:
                     run_spacing=18,
                 ),
                 *([] if has_data else [self._empty_state()]),
-                ft.Row(
+                ft.ResponsiveRow(
                     [
-                        card(
-                            ft.Column(
-                                [
-                                    ft.Text("Top 3 categorias de despesa", size=16, weight=ft.FontWeight.BOLD),
-                                    *(self._category_bars(top_categorias) or [ft.Text("Nenhuma despesa no mes atual.", color="#6B7280")]),
-                                ],
-                                spacing=14,
+                        ft.Container(
+                            card(
+                                ft.Column(
+                                    [
+                                        ft.Text("Top 3 categorias de despesa", size=16, weight=ft.FontWeight.BOLD),
+                                        *(self._category_bars(top_categorias) or [ft.Text("Nenhuma despesa no mes atual.", color="#6B7280")]),
+                                    ],
+                                    spacing=14,
+                                ),
                             ),
-                            expand=True,
+                            col={"sm": 12, "md": 6},
                         ),
-                        card(
-                            ft.Column(
-                                [
-                                    ft.Text("Ultimos lancamentos", size=16, weight=ft.FontWeight.BOLD),
-                                    *(self._recent_rows(ultimos) or [ft.Text("Nenhum lancamento ativo.", color="#6B7280")]),
-                                ],
-                                spacing=12,
+                        ft.Container(
+                            card(
+                                ft.Column(
+                                    [
+                                        ft.Text("Ultimos lancamentos", size=16, weight=ft.FontWeight.BOLD),
+                                        *(self._recent_rows(ultimos) or [ft.Text("Nenhum lancamento ativo.", color="#6B7280")]),
+                                    ],
+                                    spacing=12,
+                                ),
                             ),
-                            expand=True,
+                            col={"sm": 12, "md": 6},
                         ),
                     ],
                     spacing=18,
                     run_spacing=18,
-                    wrap=True,
                 ),
             ],
             spacing=22,

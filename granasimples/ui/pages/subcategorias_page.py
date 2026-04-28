@@ -88,8 +88,8 @@ class SubcategoriasPage:
             if update_page:
                 self.page.update()
 
-        filtro_texto.on_change = refresh_rows
-        filtro_status.on_change = refresh_rows
+        filtro_texto.on_change = lambda _: refresh_rows()
+        filtro_status.on_change = lambda _: refresh_rows()
         refresh_rows(False)
 
         return ft.Column(

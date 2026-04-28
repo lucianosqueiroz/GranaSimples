@@ -108,8 +108,8 @@ class CartoesPage:
                 show_message(self.page, str(exc), True)
 
         vencimento.on_change = atualizar_fechamento
-        filtro_texto.on_change = refresh_rows
-        filtro_status.on_change = refresh_rows
+        filtro_texto.on_change = lambda _: refresh_rows()
+        filtro_status.on_change = lambda _: refresh_rows()
         refresh_rows(False)
 
         return ft.Column(
