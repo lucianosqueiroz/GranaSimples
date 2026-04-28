@@ -30,7 +30,20 @@ def test_filter_tipo_sem_texto():
         {"nome": "Arquivo", "tipo": "Pessoa", "ativo": 0},
     ]
 
-    assert filter_rows(rows, tipo="Pessoa", status="ativos") == [{"nome": "Luciano", "tipo": "Pessoa", "ativo": 1}]
+    assert filter_rows(rows, tipo="pessoa", status="ativos") == [{"nome": "Luciano", "tipo": "Pessoa", "ativo": 1}]
+
+
+def test_filter_tipo_conta_banco_sem_texto():
+    rows = [
+        {"nome": "Banco Principal", "tipo": "Banco", "ativo": 1},
+        {"nome": "Banco Itau", "tipo": "banco", "ativo": 0},
+        {"nome": "Carteira", "tipo": "Carteira", "ativo": 1},
+    ]
+
+    assert filter_rows(rows, tipo="Banco", status="todos") == [
+        {"nome": "Banco Principal", "tipo": "Banco", "ativo": 1},
+        {"nome": "Banco Itau", "tipo": "banco", "ativo": 0},
+    ]
 
 
 def test_filter_tipo_e_status_todos_sem_texto():

@@ -108,8 +108,14 @@ def filter_rows(rows: list[dict], text: str = "", tipo: str = "", status: str = 
     elif status in {"inativos", "inativo"}:
         result = [row for row in result if not is_active_value(row.get("ativo", 1))]
 
-    if tipo and _normalize_filter_value(tipo) not in {"todos", "todas"}:
-        result = [row for row in result if row.get("tipo") == tipo or row.get("categoria_tipo") == tipo]
+    tipo_normalizado = _normalize_filter_value(tipo)
+    if tipo_normalizado and tipo_normalizado not in {"todos", "todas"}:
+        result = [
+            row
+            for row in result
+            if _normalize_filter_value(row.get("tipo")) == tipo_normalizado
+            or _normalize_filter_value(row.get("categoria_tipo")) == tipo_normalizado
+        ]
 
     if text:
         result = [row for row in result if text in " ".join(str(value).lower() for value in row.values() if value is not None)]
