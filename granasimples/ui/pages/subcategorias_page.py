@@ -2,7 +2,7 @@ import flet as ft
 
 from granasimples.services.categoria_service import CategoriaService
 from granasimples.services.subcategoria_service import SubcategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, edit_button, ellipsis_text, filter_rows, header_cell, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import card, primary_button
 
 
@@ -65,8 +65,9 @@ class SubcategoriasPage:
                     refresh_rows()
 
                 def alternar(item=item):
-                    self.service.set_active(item["id"], not bool(item["ativo"]))
-                    show_message(self.page, "Registro reativado." if not bool(item["ativo"]) else "Registro inativado.")
+                    active = is_active_value(item["ativo"])
+                    self.service.set_active(item["id"], not active)
+                    show_message(self.page, "Registro reativado." if not active else "Registro inativado.")
                     refresh_rows()
 
                 rows.append(
@@ -74,9 +75,9 @@ class SubcategoriasPage:
                         [
                             ellipsis_text(item["nome"], expand=True),
                             ellipsis_text(item["categoria_nome"], width=180),
-                            status_label(bool(item["ativo"])),
+                            status_label(item["ativo"]),
                             edit_button(editar),
-                            toggle_active_button(bool(item["ativo"]), lambda _, alternar=alternar: alternar()),
+                            toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
                             delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
                         ],
                         spacing=8,

@@ -11,9 +11,15 @@ class DashboardPage:
         self.dashboard = DashboardService()
 
     def build(self) -> ft.Control:
-        resumo = self.dashboard.resumo_mes_atual()
-        top_categorias = self.dashboard.top_categorias_despesa()
-        ultimos = self.dashboard.ultimos_lancamentos()
+        try:
+            resumo = self.dashboard.resumo_mes_atual()
+            top_categorias = self.dashboard.top_categorias_despesa()
+            ultimos = self.dashboard.ultimos_lancamentos()
+        except Exception as exc:
+            print(f"[GranaSimples][Dashboard] Falha ao carregar dados: {exc}")
+            resumo = {"receitas": 0, "despesas": 0, "saldo": 0, "cartoes": 0}
+            top_categorias = []
+            ultimos = []
         has_data = any(float(resumo.get(key, 0)) for key in ["receitas", "despesas", "saldo", "cartoes"])
 
         return ft.Column(
@@ -31,7 +37,7 @@ class DashboardPage:
                     spacing=18,
                     run_spacing=18,
                 ),
-                *([] if has_data else [self._empty_state()]),
+                *([] if has_data else [ft.Text("Nenhum dado no mes atual. Cadastre lancamentos para atualizar os indicadores.", color="#64748B", size=14)]),
                 ft.ResponsiveRow(
                     [
                         ft.Container(
@@ -86,30 +92,6 @@ class DashboardPage:
         metric.width = 245
         metric.height = 150
         return metric
-
-    def _empty_state(self) -> ft.Container:
-        return card(
-            ft.Row(
-                [
-                    ft.Container(
-                        ft.Icon(ft.Icons.ADD_CHART_OUTLINED, color="#2563EB", size=28),
-                        bgcolor="#EFF6FF",
-                        border_radius=10,
-                        padding=10,
-                    ),
-                    ft.Column(
-                        [
-                            ft.Text("Dashboard pronto para receber dados", size=16, weight=ft.FontWeight.BOLD, color="#0F172A"),
-                            ft.Text("Cadastre contas, categorias e lancamentos para acompanhar o mes em tempo real.", color="#64748B", size=14),
-                        ],
-                        spacing=4,
-                        expand=True,
-                    ),
-                ],
-                spacing=14,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-            )
-        )
 
     def _category_bars(self, items: list[dict]) -> list[ft.Control]:
         if not items:

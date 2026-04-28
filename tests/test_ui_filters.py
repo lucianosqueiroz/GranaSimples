@@ -5,9 +5,13 @@ def test_filter_status_inativos_sem_texto():
     rows = [
         {"nome": "Ativo", "ativo": 1},
         {"nome": "Inativo", "ativo": 0},
+        {"nome": "Inativo string", "ativo": "0"},
     ]
 
-    assert filter_rows(rows, status="inativos") == [{"nome": "Inativo", "ativo": 0}]
+    assert filter_rows(rows, status="Inativos") == [
+        {"nome": "Inativo", "ativo": 0},
+        {"nome": "Inativo string", "ativo": "0"},
+    ]
 
 
 def test_filter_status_todos_sem_texto():
@@ -16,7 +20,7 @@ def test_filter_status_todos_sem_texto():
         {"nome": "Inativo", "ativo": 0},
     ]
 
-    assert filter_rows(rows, status="todos") == rows
+    assert filter_rows(rows, status="Todos") == rows
 
 
 def test_filter_tipo_sem_texto():

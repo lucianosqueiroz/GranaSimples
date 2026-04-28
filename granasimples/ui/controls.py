@@ -43,11 +43,22 @@ def table_header(cells: list[ft.Control]) -> ft.Container:
     )
 
 
-def status_label(active: bool) -> ft.Container:
-    color = ft.Colors.GREEN_700 if active else ft.Colors.GREY_700
-    bgcolor = "#DCFCE7" if active else "#F3F4F6"
+def is_active_value(value) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() not in {"0", "false", "falso", "inativo", "inactive", "no", "nao", ""}
+    return bool(value)
+
+
+def _normalize_filter_value(value: str | None) -> str:
+    return (value or "").strip().lower()
+
+
+def status_label(active) -> ft.Container:
+    is_active = is_active_value(active)
+    color = ft.Colors.GREEN_700 if is_active else ft.Colors.GREY_700
+    bgcolor = "#DCFCE7" if is_active else "#F3F4F6"
     return ft.Container(
-        ft.Text("Ativo" if active else "Inativo", size=12, color=color, weight=ft.FontWeight.BOLD),
+        ft.Text("Ativo" if is_active else "Inativo", size=12, color=color, weight=ft.FontWeight.BOLD),
         bgcolor=bgcolor,
         border_radius=6,
         padding=ft.padding.symmetric(horizontal=8, vertical=4),
@@ -75,11 +86,12 @@ def delete_button(on_click) -> ft.IconButton:
     )
 
 
-def toggle_active_button(active: bool, on_click) -> ft.IconButton:
+def toggle_active_button(active, on_click) -> ft.IconButton:
+    is_active = is_active_value(active)
     return ft.IconButton(
-        ft.Icons.TOGGLE_ON_OUTLINED if active else ft.Icons.TOGGLE_OFF_OUTLINED,
-        tooltip="Inativar registro" if active else "Reativar registro",
-        icon_color="#16A34A" if active else "#94A3B8",
+        ft.Icons.TOGGLE_ON_OUTLINED if is_active else ft.Icons.TOGGLE_OFF_OUTLINED,
+        tooltip="Inativar registro" if is_active else "Reativar registro",
+        icon_color="#16A34A" if is_active else "#94A3B8",
         icon_size=20,
         on_click=on_click,
     )
@@ -88,14 +100,17 @@ def toggle_active_button(active: bool, on_click) -> ft.IconButton:
 def filter_rows(rows: list[dict], text: str = "", tipo: str = "", status: str = "ativos") -> list[dict]:
     text = (text or "").strip().lower()
     tipo = (tipo or "").strip()
-    status = status or "ativos"
-    result = rows
-    if status == "ativos":
-        result = [row for row in result if bool(row.get("ativo", 1))]
-    elif status == "inativos":
-        result = [row for row in result if not bool(row.get("ativo", 1))]
-    if tipo:
+    status = _normalize_filter_value(status) or "ativos"
+
+    result = list(rows)
+    if status in {"ativos", "ativo"}:
+        result = [row for row in result if is_active_value(row.get("ativo", 1))]
+    elif status in {"inativos", "inativo"}:
+        result = [row for row in result if not is_active_value(row.get("ativo", 1))]
+
+    if tipo and _normalize_filter_value(tipo) not in {"todos", "todas"}:
         result = [row for row in result if row.get("tipo") == tipo or row.get("categoria_tipo") == tipo]
+
     if text:
         result = [row for row in result if text in " ".join(str(value).lower() for value in row.values() if value is not None)]
     return result

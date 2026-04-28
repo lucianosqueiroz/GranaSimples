@@ -9,7 +9,7 @@ from granasimples.services.conta_service import ContaService
 from granasimples.services.lancamento_service import LancamentoService
 from granasimples.services.pessoa_service import PessoaService
 from granasimples.services.subcategoria_service import SubcategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, header_cell, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import SUCCESS_COLOR, card, money, primary_button
 
 
@@ -170,14 +170,7 @@ class LancamentosPage:
                 )
             ]
             filtro = (filtro_texto.value or "").lower().strip()
-            items = self.service.list_all(False)
-            status = filtro_status.value or "ativos"
-            if status == "ativos":
-                items = [item for item in items if bool(item["ativo"])]
-            elif status == "inativos":
-                items = [item for item in items if not bool(item["ativo"])]
-            if filtro_tipo.value:
-                items = [item for item in items if item["tipo"] == filtro_tipo.value]
+            items = filter_rows(self.service.list_all(False), "", filtro_tipo.value, filtro_status.value)
             if filtro:
                 items = [
                     item
@@ -214,8 +207,9 @@ class LancamentosPage:
 
                 def alternar(item=item):
                     try:
-                        self.service.set_active(item["id"], not bool(item["ativo"]))
-                        show_message(self.page, "Lancamento reativado." if not bool(item["ativo"]) else "Lancamento inativado.")
+                        active = is_active_value(item["ativo"])
+                        self.service.set_active(item["id"], not active)
+                        show_message(self.page, "Lancamento reativado." if not active else "Lancamento inativado.")
                         refresh_list()
                         self.refresh_app()
                     except Exception as exc:
@@ -237,8 +231,8 @@ class LancamentosPage:
                                 ellipsis_text(item["subcategoria_nome"] or "-", width=120, color="#6B7280"),
                                 ellipsis_text(destino or item["meio_financeiro"], expand=True, color="#374151"),
                                 ellipsis_text(f"{sinal} {money(item['valor'])}", width=130, color=color, weight=ft.FontWeight.BOLD),
-                                status_label(bool(item["ativo"])),
-                                toggle_active_button(bool(item["ativo"]), lambda _, alternar=alternar: alternar()),
+                                status_label(item["ativo"]),
+                                toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
                                 delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
                             ],
                             vertical_alignment=ft.CrossAxisAlignment.CENTER,

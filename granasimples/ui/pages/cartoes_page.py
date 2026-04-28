@@ -1,7 +1,7 @@
 import flet as ft
 
 from granasimples.services.cartao_service import CartaoService
-from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import card, money, primary_button
 
 
@@ -71,8 +71,9 @@ class CartoesPage:
                     refresh_rows()
 
                 def alternar(item=item):
-                    self.service.set_active(item["id"], not bool(item["ativo"]))
-                    show_message(self.page, "Registro reativado." if not bool(item["ativo"]) else "Registro inativado.")
+                    active = is_active_value(item["ativo"])
+                    self.service.set_active(item["id"], not active)
+                    show_message(self.page, "Registro reativado." if not active else "Registro inativado.")
                     refresh_rows()
 
                 rows.append(
@@ -84,9 +85,9 @@ class CartoesPage:
                             ellipsis_text(str(item["dia_fechamento"]), width=58),
                             ellipsis_text(money(item["limite_total"]), width=112),
                             ellipsis_text(money(item["limite_usado"]), width=112),
-                            status_label(bool(item["ativo"])),
+                            status_label(item["ativo"]),
                             edit_button(editar),
-                            toggle_active_button(bool(item["ativo"]), lambda _, alternar=alternar: alternar()),
+                            toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
                             delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
                         ],
                         spacing=8,
