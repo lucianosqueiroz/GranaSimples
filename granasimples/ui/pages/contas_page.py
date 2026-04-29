@@ -3,7 +3,7 @@ import flet as ft
 from granasimples.services.conta_service import ContaService
 from granasimples.services.base_service import parse_float
 from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import card, money, primary_button
+from granasimples.ui.theme import card, field_width, form_width, money, primary_button, responsive_form_list_layout, style_form_controls
 
 
 class ContasPage:
@@ -48,6 +48,10 @@ class ContasPage:
             ],
             width=130,
         )
+        style_form_controls([nome, tipo, saldo, filtro_texto, filtro_tipo, filtro_status])
+        nome.width = field_width(self.page)
+        tipo.width = field_width(self.page)
+        saldo.width = field_width(self.page)
 
         def formatar_saldo(_):
             try:
@@ -92,7 +96,7 @@ class ContasPage:
                 def remover(item=item):
                     print(f"[GranaSimples][UI] Remover conta id={item['id']}")
                     action = self.service.remove(item["id"])
-                    show_message(self.page, "Conta excluida." if action == "deleted" else "Conta inativada.")
+                    show_message(self.page, "Conta excluída." if action == "deleted" else "Conta inativada.")
                     self.refresh_app()
 
                 def alternar(item=item):
@@ -129,24 +133,19 @@ class ContasPage:
         filtro_status.on_select = self._on_filter_change
         refresh_rows(False)
 
+        form_card = ft.Container(card(ft.Column([nome, tipo, saldo, primary_button("Salvar", salvar)], spacing=16)), width=form_width(self.page))
+        list_card = card(
+            ft.Column(
+                [ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10), rows_column],
+                spacing=12,
+            ),
+            expand=True,
+        )
+
         return ft.Column(
             [
                 section_title("Contas"),
-                ft.Row(
-                    [
-                        ft.Container(card(ft.Column([nome, tipo, saldo, primary_button("Salvar", salvar)], spacing=16)), width=380),
-                        card(
-                            ft.Column(
-                                [ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10), rows_column],
-                                spacing=12,
-                            ),
-                            expand=True,
-                        ),
-                    ],
-                    spacing=16,
-                    expand=True,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                ),
+                responsive_form_list_layout(self.page, form_card, list_card),
             ],
             spacing=16,
             scroll=ft.ScrollMode.AUTO,

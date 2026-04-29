@@ -8,26 +8,28 @@ from granasimples.ui.pages.dashboard_page import DashboardPage
 from granasimples.ui.pages.lancamentos_page import LancamentosPage
 from granasimples.ui.pages.pessoas_page import PessoasPage
 from granasimples.ui.pages.subcategorias_page import SubcategoriasPage
-from granasimples.ui.theme import BORDER, CARD, FUNDO, ROXO, SUBTEXTO, TEXTO, apply_theme
+from granasimples.ui.theme import BORDER, CARD, FUNDO, ROXO, SUBTEXTO, TEXTO, apply_theme, content_padding, is_mobile
 
 
 class GranaSimplesApp:
     def __init__(self, page: ft.Page) -> None:
         self.page = page
-        self.content = ft.Container(expand=True, padding=ft.padding.symmetric(horizontal=28, vertical=26), bgcolor=FUNDO)
+        self.content = ft.Container(expand=True, bgcolor=FUNDO)
         self.selected_index = 0
 
     def build(self) -> None:
         apply_theme(self.page)
+        self.page.on_resize = self._resize
+        mobile = is_mobile(self.page)
         self.rail = ft.NavigationRail(
             selected_index=self.selected_index,
-            label_type=ft.NavigationRailLabelType.ALL,
-            min_width=96,
-            min_extended_width=180,
+            label_type=ft.NavigationRailLabelType.NONE if mobile else ft.NavigationRailLabelType.ALL,
+            min_width=60 if mobile else 118,
+            min_extended_width=60 if mobile else 210,
             bgcolor=CARD,
             indicator_color=ROXO,
-            selected_label_text_style=ft.TextStyle(color=TEXTO, weight=ft.FontWeight.BOLD),
-            unselected_label_text_style=ft.TextStyle(color=SUBTEXTO),
+            selected_label_text_style=ft.TextStyle(color=TEXTO, size=11, weight=ft.FontWeight.BOLD),
+            unselected_label_text_style=ft.TextStyle(color=SUBTEXTO, size=11),
             destinations=[
                 ft.NavigationRailDestination(icon=ft.Icons.DASHBOARD_OUTLINED, selected_icon=ft.Icons.DASHBOARD, label="Dashboard"),
                 ft.NavigationRailDestination(icon=ft.Icons.GROUP_OUTLINED, label="Pessoas"),
@@ -56,6 +58,13 @@ class GranaSimplesApp:
         )
         self._render()
 
+    def _resize(self, event: ft.ControlEvent) -> None:
+        mobile = is_mobile(self.page)
+        self.rail.label_type = ft.NavigationRailLabelType.NONE if mobile else ft.NavigationRailLabelType.ALL
+        self.rail.min_width = 60 if mobile else 118
+        self.rail.min_extended_width = 60 if mobile else 210
+        self._render()
+
     def _navigate(self, event: ft.ControlEvent) -> None:
         self.selected_index = event.control.selected_index
         self._render()
@@ -74,5 +83,7 @@ class GranaSimplesApp:
         if self.selected_index >= len(pages):
             self.selected_index = 0
             self.rail.selected_index = 0
+        padding = content_padding(self.page)
+        self.content.padding = ft.padding.symmetric(horizontal=padding, vertical=padding)
         self.content.content = pages[self.selected_index]()
         self.page.update()

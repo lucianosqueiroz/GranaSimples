@@ -2,7 +2,7 @@ import flet as ft
 
 from granasimples.services.cartao_service import CartaoService
 from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import card, money, primary_button
+from granasimples.ui.theme import card, field_width, form_width, money, primary_button, responsive_form_list_layout, style_form_controls
 
 
 class CartoesPage:
@@ -33,6 +33,10 @@ class CartoesPage:
             ],
             width=130,
         )
+        style_form_controls([nome, digitos, vencimento, fechamento, limite, filtro_texto, filtro_status])
+        nome.width = field_width(self.page)
+        digitos.width = field_width(self.page)
+        limite.width = field_width(self.page)
         rows_column = ft.Column(spacing=8, scroll=ft.ScrollMode.AUTO)
 
         def atualizar_fechamento(_=None):
@@ -71,7 +75,7 @@ class CartoesPage:
                 def remover(item=item):
                     print(f"[GranaSimples][UI] Remover cartão id={item['id']}")
                     action = self.service.remove(item["id"])
-                    show_message(self.page, "Cartao excluido." if action == "deleted" else "Cartao inativado.")
+                    show_message(self.page, "Cartão excluído." if action == "deleted" else "Cartão inativado.")
                     self.refresh_app()
 
                 def alternar(item=item):
@@ -119,29 +123,24 @@ class CartoesPage:
         filtro_status.on_select = self._on_filter_change
         refresh_rows(False)
 
+        form_card = ft.Container(
+            card(
+                ft.Column(
+                    [nome, digitos, ft.Row([vencimento, fechamento], spacing=20, wrap=True), limite, primary_button("Salvar", salvar)],
+                    spacing=16,
+                )
+            ),
+            width=form_width(self.page),
+        )
+        list_card = card(
+            ft.Column([ft.Row([filtro_texto, filtro_status], wrap=True, spacing=10), rows_column], spacing=12),
+            expand=True,
+        )
+
         return ft.Column(
             [
                 section_title("Cartões"),
-                ft.Row(
-                    [
-                        ft.Container(
-                            card(
-                                ft.Column(
-                                    [nome, digitos, ft.Row([vencimento, fechamento], spacing=20), limite, primary_button("Salvar", salvar)],
-                                    spacing=16,
-                                )
-                            ),
-                            width=380,
-                        ),
-                        card(
-                            ft.Column([ft.Row([filtro_texto, filtro_status], wrap=True, spacing=10), rows_column], spacing=12),
-                            expand=True,
-                        ),
-                    ],
-                    spacing=20,
-                    expand=True,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                ),
+                responsive_form_list_layout(self.page, form_card, list_card, spacing=20),
             ],
             spacing=16,
             scroll=ft.ScrollMode.AUTO,

@@ -3,7 +3,7 @@ import flet as ft
 from granasimples.core.constants import TIPO_CENTRO_CUSTO, TIPO_PESSOA
 from granasimples.services.pessoa_service import PessoaService
 from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import card, primary_button
+from granasimples.ui.theme import card, field_width, form_width, primary_button, responsive_form_list_layout, style_form_controls
 
 
 class PessoasPage:
@@ -49,6 +49,9 @@ class PessoasPage:
             ],
             width=130,
         )
+        style_form_controls([nome, tipo, filtro_texto, filtro_tipo, filtro_status])
+        nome.width = field_width(self.page)
+        tipo.width = field_width(self.page)
 
         def salvar(_):
             try:
@@ -82,7 +85,7 @@ class PessoasPage:
                 def remover(item=item):
                     print(f"[GranaSimples][UI] Remover pessoa id={item['id']}")
                     action = self.service.remove(item["id"])
-                    show_message(self.page, "Pessoa/Centro de Custo excluido." if action == "deleted" else "Pessoa/Centro de Custo inativado.")
+                    show_message(self.page, "Pessoa/Centro de Custo excluído." if action == "deleted" else "Pessoa/Centro de Custo inativado.")
                     self.refresh_app()
 
                 def alternar(item=item):
@@ -118,27 +121,22 @@ class PessoasPage:
         filtro_status.on_select = self._on_filter_change
         refresh_rows(False)
 
+        form_card = ft.Container(card(ft.Column([nome, tipo, primary_button("Salvar", salvar)], spacing=16)), width=form_width(self.page))
+        list_card = card(
+            ft.Column(
+                [
+                    ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10),
+                    rows_column,
+                ],
+                spacing=12,
+            ),
+            expand=True,
+        )
+
         return ft.Column(
             [
                 section_title("Pessoas / Centro de Custo"),
-                ft.Row(
-                    [
-                        ft.Container(card(ft.Column([nome, tipo, primary_button("Salvar", salvar)], spacing=16)), width=380),
-                        card(
-                            ft.Column(
-                                [
-                                    ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10),
-                                    rows_column,
-                                ],
-                                spacing=12,
-                            ),
-                            expand=True,
-                        ),
-                    ],
-                    spacing=16,
-                    expand=True,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                ),
+                responsive_form_list_layout(self.page, form_card, list_card),
             ],
             spacing=16,
             scroll=ft.ScrollMode.AUTO,

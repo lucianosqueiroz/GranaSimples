@@ -9,8 +9,8 @@ from granasimples.services.conta_service import ContaService
 from granasimples.services.lancamento_service import LancamentoService
 from granasimples.services.pessoa_service import PessoaService
 from granasimples.services.subcategoria_service import SubcategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import BORDER, SUCCESS_COLOR, SUBTEXTO, TEXTO, VERMELHO, card, money, primary_button
+from granasimples.ui.controls import dropdown_options, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.theme import BORDER, SUCCESS_COLOR, SUBTEXTO, TEXTO, VERMELHO, card, field_width, form_width, is_mobile, money, primary_button, responsive_form_list_layout, secondary_button, style_form_controls
 
 
 def data_br(value: str | None = None) -> str:
@@ -113,7 +113,9 @@ class LancamentosPage:
             observacoes,
         ]
         for field in fields:
-            field.width = 320
+            field.width = field_width(self.page)
+        style_form_controls(fields + [filtro_texto, filtro_tipo, filtro_status])
+        observacoes.height = 96
 
         def update_dynamic_fields(update_page: bool = True) -> None:
             if tipo.value == TIPO_RECEITA:
@@ -167,9 +169,9 @@ class LancamentosPage:
                         header_cell("Categoria", width=130),
                         header_cell("Subcategoria", width=120),
                         header_cell("Meio financeiro", expand=True),
-                        header_cell("Valor", width=130),
-                        header_cell("Status", width=76),
-                        header_cell("Ações", width=96),
+                        header_cell("Valor", width=118),
+                        header_cell("Status", width=88),
+                        header_cell("Ações", width=76),
                     ]
                 )
             ]
@@ -180,20 +182,11 @@ class LancamentosPage:
                 bg_color = "#12251A" if item["tipo"] == TIPO_RECEITA else "#2A1215"
                 destino = item["conta_nome"] if item["meio_financeiro"] == MEIO_CONTA else item["cartao_nome"]
 
-                def remover(item=item):
-                    try:
-                        print(f"[GranaSimples][UI] Remover lançamento id={item['id']}")
-                        self.service.remove(item["id"])
-                        show_message(self.page, "Lancamento excluido.")
-                        self.refresh_app()
-                    except Exception as exc:
-                        show_message(self.page, str(exc), True)
-
                 def alternar(item=item):
                     try:
                         active = is_active_value(item["ativo"])
                         self.service.set_active(item["id"], not active)
-                        show_message(self.page, "Lancamento reativado." if not active else "Lancamento inativado.")
+                        show_message(self.page, "Lançamento reativado." if not active else "Lançamento inativado.")
                         refresh_list()
                         self.refresh_app()
                     except Exception as exc:
@@ -214,14 +207,14 @@ class LancamentosPage:
                                 ellipsis_text(item["categoria_nome"], width=130, weight=ft.FontWeight.W_500),
                                 ellipsis_text(item["subcategoria_nome"] or "-", width=120, color=SUBTEXTO),
                                 ellipsis_text(destino or item["meio_financeiro"], expand=True, color=TEXTO),
-                                ellipsis_text(f"{sinal} {money(item['valor'])}", width=130, color=color, weight=ft.FontWeight.BOLD),
-                                status_label(item["ativo"]),
+                                ellipsis_text(f"{sinal} {money(item['valor'])}", width=118, color=color, weight=ft.FontWeight.BOLD),
+                                ft.Container(status_label(item["ativo"]), width=88),
                                 toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
-                                delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
                             ],
+                            spacing=10,
                             vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         ),
-                        padding=ft.padding.symmetric(vertical=8),
+                        padding=ft.padding.symmetric(horizontal=10, vertical=8),
                         border=ft.border.only(bottom=ft.BorderSide(1, BORDER)),
                     )
                 )
@@ -307,12 +300,19 @@ class LancamentosPage:
                             spacing=12,
                             scroll=ft.ScrollMode.AUTO,
                         ),
-                        height=430,
+                        height=360 if is_mobile(self.page) else 450,
+                    ),
+                    ft.Row(
+                        [
+                            ft.Icon(ft.Icons.KEYBOARD_ARROW_DOWN, size=16, color=SUBTEXTO),
+                            ft.Text("Role para ver mais campos", size=11, color=SUBTEXTO),
+                        ],
+                        spacing=4,
                     ),
                     ft.Row(
                         [
                             primary_button("Salvar lançamento", salvar),
-                            ft.OutlinedButton("Novo lançamento", icon=ft.Icons.ADD, on_click=novo_lancamento),
+                            secondary_button("Novo lançamento", novo_lancamento, icon=ft.Icons.ADD),
                         ],
                         spacing=10,
                         wrap=True,
@@ -321,31 +321,25 @@ class LancamentosPage:
                 spacing=14,
             )
         )
-        form.width = 368
+        form.width = form_width(self.page, 368)
+        list_card = card(
+            ft.Column(
+                [
+                    ft.Text("Últimos lançamentos", weight=ft.FontWeight.BOLD, size=16, color=TEXTO),
+                    ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10),
+                    self.list_container,
+                ],
+                spacing=12,
+            ),
+            expand=True,
+        )
 
         return ft.Column(
             [
                 section_title("Lançamentos"),
-                ft.Row(
-                    [
-                        form,
-                        card(
-                            ft.Column(
-                                [
-                                    ft.Text("Últimos lançamentos", weight=ft.FontWeight.BOLD, size=16, color=TEXTO),
-                                    ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10),
-                                    self.list_container,
-                                ],
-                                spacing=12,
-                            ),
-                            expand=True,
-                        ),
-                    ],
-                    spacing=16,
-                    expand=True,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                ),
+                responsive_form_list_layout(self.page, form, list_card),
             ],
             spacing=20,
             expand=True,
+            scroll=ft.ScrollMode.AUTO,
         )

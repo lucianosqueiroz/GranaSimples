@@ -3,7 +3,7 @@ import flet as ft
 from granasimples.services.categoria_service import CategoriaService
 from granasimples.services.subcategoria_service import SubcategoriaService
 from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import card, primary_button
+from granasimples.ui.theme import card, field_width, form_width, primary_button, responsive_form_list_layout, style_form_controls
 
 
 class SubcategoriasPage:
@@ -32,6 +32,9 @@ class SubcategoriasPage:
             ],
             width=130,
         )
+        style_form_controls([categoria, nome, filtro_texto, filtro_status])
+        categoria.width = field_width(self.page)
+        nome.width = field_width(self.page)
 
         def salvar(_):
             try:
@@ -65,7 +68,7 @@ class SubcategoriasPage:
                 def remover(item=item):
                     print(f"[GranaSimples][UI] Remover subcategoria id={item['id']}")
                     action = self.service.remove(item["id"])
-                    show_message(self.page, "Subcategoria excluida." if action == "deleted" else "Subcategoria inativada.")
+                    show_message(self.page, "Subcategoria excluída." if action == "deleted" else "Subcategoria inativada.")
                     self.refresh_app()
 
                 def alternar(item=item):
@@ -99,21 +102,16 @@ class SubcategoriasPage:
         filtro_status.on_select = self._on_filter_change
         refresh_rows(False)
 
+        form_card = ft.Container(card(ft.Column([categoria, nome, primary_button("Salvar", salvar)], spacing=16)), width=form_width(self.page))
+        list_card = card(
+            ft.Column([ft.Row([filtro_texto, filtro_status], wrap=True, spacing=10), rows_column], spacing=12),
+            expand=True,
+        )
+
         return ft.Column(
             [
                 section_title("Subcategorias"),
-                ft.Row(
-                    [
-                        ft.Container(card(ft.Column([categoria, nome, primary_button("Salvar", salvar)], spacing=16)), width=380),
-                        card(
-                            ft.Column([ft.Row([filtro_texto, filtro_status], wrap=True, spacing=10), rows_column], spacing=12),
-                            expand=True,
-                        ),
-                    ],
-                    spacing=16,
-                    expand=True,
-                    vertical_alignment=ft.CrossAxisAlignment.START,
-                ),
+                responsive_form_list_layout(self.page, form_card, list_card),
             ],
             spacing=16,
             scroll=ft.ScrollMode.AUTO,

@@ -2,7 +2,7 @@ import flet as ft
 
 from granasimples.services.configuracao_service import ConfiguracaoService
 from granasimples.ui.controls import section_title, show_message
-from granasimples.ui.theme import SUBTEXTO, TEXTO, card, primary_button
+from granasimples.ui.theme import SUBTEXTO, TEXTO, card, field_width, form_width, primary_button, style_form_controls
 
 
 class ConfiguracoesPage:
@@ -24,6 +24,9 @@ class ConfiguracoesPage:
             width=320,
             keyboard_type=ft.KeyboardType.NUMBER,
         )
+        style_form_controls([dias_fechamento, percentual_alerta])
+        dias_fechamento.width = field_width(self.page)
+        percentual_alerta.width = field_width(self.page)
 
         def salvar(_):
             try:
@@ -53,8 +56,9 @@ class ConfiguracoesPage:
                             spacing=16,
                         )
                     ),
-                    width=420,
+                    width=form_width(self.page, 420),
                 ),
             ],
             spacing=20,
+            scroll=ft.ScrollMode.AUTO,
         )

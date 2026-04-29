@@ -128,7 +128,7 @@ def filter_rows(rows, text="", tipo="", status="todos"):
 def confirm_delete(
     page: ft.Page,
     on_confirm,
-    message: str = "Sem vinculos, o registro sera excluido. Com vinculos, sera inativado.",
+    message: str = "Sem vínculos, o registro será excluído. Com vínculos, será inativado.",
 ) -> None:
     dialog = ft.AlertDialog(
         modal=True,
