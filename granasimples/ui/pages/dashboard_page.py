@@ -43,7 +43,7 @@ class DashboardPage:
                 spacing=20,
             ),
             expand=True,
-            alignment=ft.alignment.top_left,
+            alignment=ft.Alignment(-1, -1),
         )
 
     def _load_data(self) -> tuple[dict[str, float], list[dict]]:
