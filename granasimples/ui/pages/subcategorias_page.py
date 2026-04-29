@@ -2,7 +2,7 @@ import flet as ft
 
 from granasimples.services.categoria_service import CategoriaService
 from granasimples.services.subcategoria_service import SubcategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, edit_button, ellipsis_text, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import card, primary_button
 
 
@@ -50,7 +50,16 @@ class SubcategoriasPage:
                     ]
                 )
             ]
-            items = filter_rows(self.service.list_with_categoria(False), filtro_texto.value, "", filtro_status.value)
+            items = self.service.list_with_categoria(False)
+            status = (filtro_status.value or "ativos").strip().lower()
+            if status == "ativos":
+                items = [item for item in items if is_active_value(item.get("ativo", 1))]
+            elif status == "inativos":
+                items = [item for item in items if not is_active_value(item.get("ativo", 1))]
+
+            texto = (filtro_texto.value or "").strip().lower()
+            if texto:
+                items = [item for item in items if texto in " ".join(str(value).lower() for value in item.values() if value is not None)]
             for item in items:
                 def editar(_, item=item):
                     self.editing_id = item["id"]

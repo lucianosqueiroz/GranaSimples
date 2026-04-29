@@ -31,7 +31,7 @@ class DashboardPage:
                 card(
                     ft.Column(
                         [
-                            ft.Text("Top 3 categorias", size=16, weight=ft.FontWeight.BOLD, color="#0F172A"),
+                            ft.Text("Top 3 categorias de despesas", size=16, weight=ft.FontWeight.BOLD, color="#0F172A"),
                             *(self._category_rows(top_categorias) or [ft.Text("Nenhuma despesa no mes atual.", color="#64748B")]),
                         ],
                         spacing=12,

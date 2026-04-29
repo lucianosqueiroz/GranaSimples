@@ -9,7 +9,7 @@ from granasimples.services.conta_service import ContaService
 from granasimples.services.lancamento_service import LancamentoService
 from granasimples.services.pessoa_service import PessoaService
 from granasimples.services.subcategoria_service import SubcategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import SUCCESS_COLOR, card, money, primary_button
 
 
@@ -169,13 +169,23 @@ class LancamentosPage:
                     ]
                 )
             ]
-            filtro = (filtro_texto.value or "").lower().strip()
-            items = filter_rows(self.service.list_all(False), "", filtro_tipo.value, filtro_status.value)
-            if filtro:
+            items = self.service.list_all(False)
+            status = (filtro_status.value or "ativos").strip().lower()
+            if status == "ativos":
+                items = [item for item in items if is_active_value(item.get("ativo", 1))]
+            elif status == "inativos":
+                items = [item for item in items if not is_active_value(item.get("ativo", 1))]
+
+            tipo_filtro = (filtro_tipo.value or "").strip().lower()
+            if tipo_filtro and tipo_filtro != "todos":
+                items = [item for item in items if str(item.get("tipo", "")).strip().lower() == tipo_filtro]
+
+            texto = (filtro_texto.value or "").lower().strip()
+            if texto:
                 items = [
                     item
                     for item in items
-                    if filtro
+                    if texto
                     in " ".join(
                         str(value).lower()
                         for value in [

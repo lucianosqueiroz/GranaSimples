@@ -2,7 +2,7 @@ import flet as ft
 
 from granasimples.core.constants import TIPO_DESPESA, TIPO_RECEITA
 from granasimples.services.categoria_service import CategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import card, primary_button
 
 
@@ -60,7 +60,20 @@ class CategoriasPage:
                     ]
                 )
             ]
-            items = filter_rows(self.service.list_all(False), filtro_texto.value, filtro_tipo.value, filtro_status.value)
+            items = self.service.list_all(False)
+            status = (filtro_status.value or "ativos").strip().lower()
+            if status == "ativos":
+                items = [item for item in items if is_active_value(item.get("ativo", 1))]
+            elif status == "inativos":
+                items = [item for item in items if not is_active_value(item.get("ativo", 1))]
+
+            tipo_filtro = (filtro_tipo.value or "").strip().lower()
+            if tipo_filtro and tipo_filtro != "todos":
+                items = [item for item in items if str(item.get("tipo", "")).strip().lower() == tipo_filtro]
+
+            texto = (filtro_texto.value or "").strip().lower()
+            if texto:
+                items = [item for item in items if texto in " ".join(str(value).lower() for value in item.values() if value is not None)]
             for item in items:
                 def editar(_, item=item):
                     self.editing_id = item["id"]
