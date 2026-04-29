@@ -97,28 +97,26 @@ def toggle_active_button(active, on_click) -> ft.IconButton:
     )
 
 
-def filter_rows(rows: list[dict], text: str = "", tipo: str = "", status: str = "ativos") -> list[dict]:
+def filter_rows(rows, text="", tipo="", status="todos"):
     text = (text or "").strip().lower()
-    tipo = (tipo or "").strip()
-    status = _normalize_filter_value(status) or "ativos"
+    tipo = (tipo or "").strip().lower()
+    status = (status or "todos").strip().lower()
 
     result = list(rows)
-    if status in {"ativos", "ativo"}:
-        result = [row for row in result if is_active_value(row.get("ativo", 1))]
-    elif status in {"inativos", "inativo"}:
-        result = [row for row in result if not is_active_value(row.get("ativo", 1))]
+    if status == "ativos":
+        result = [r for r in result if is_active_value(r.get("ativo", 1))]
+    elif status == "inativos":
+        result = [r for r in result if not is_active_value(r.get("ativo", 1))]
 
-    tipo_normalizado = _normalize_filter_value(tipo)
-    if tipo_normalizado and tipo_normalizado not in {"todos", "todas"}:
-        result = [
-            row
-            for row in result
-            if _normalize_filter_value(row.get("tipo")) == tipo_normalizado
-            or _normalize_filter_value(row.get("categoria_tipo")) == tipo_normalizado
-        ]
+    if tipo and tipo != "todos":
+        result = [r for r in result if str(r.get("tipo", "")).lower() == tipo]
 
     if text:
-        result = [row for row in result if text in " ".join(str(value).lower() for value in row.values() if value is not None)]
+        result = [
+            r for r in result
+            if text in " ".join(str(v).lower() for v in r.values() if v)
+        ]
+
     return result
 
 

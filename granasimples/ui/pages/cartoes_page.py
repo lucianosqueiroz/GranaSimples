@@ -77,7 +77,7 @@ class CartoesPage:
                     print(f"[GranaSimples][UI] Remover cartão id={item['id']}")
                     action = self.service.remove(item["id"])
                     show_message(self.page, "Cartao excluido." if action == "deleted" else "Cartao inativado.")
-                    refresh_rows()
+                    self.refresh_app()
 
                 def alternar(item=item):
                     active = is_active_value(item["ativo"])

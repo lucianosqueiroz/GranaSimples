@@ -13,33 +13,37 @@ class DashboardPage:
     def build(self) -> ft.Control:
         resumo, top_categorias = self._load_data()
 
-        return ft.Column(
-            [
-                section_title("GranaSimples"),
-                ft.Text("Controle financeiro simples, rapido e sem complicacao.", color="#64748B", size=15),
-                ft.Row(
-                    [
-                        self._metric("Receitas do mes", resumo["receitas"], SUCCESS_COLOR),
-                        self._metric("Despesas do mes", resumo["despesas"], "#DC2626"),
-                        self._metric("Saldo do mes", resumo["saldo"], "#334155"),
-                        self._metric("Gasto no cartao", resumo["cartoes"], "#2563EB"),
-                    ],
-                    wrap=True,
-                    spacing=16,
-                    run_spacing=16,
-                ),
-                card(
-                    ft.Column(
+        return ft.Container(
+            content=ft.Column(
+                [
+                    section_title("GranaSimples"),
+                    ft.Text("Controle financeiro simples, rapido e sem complicacao.", color="#64748B", size=15),
+                    ft.Row(
                         [
-                            ft.Text("Top 3 categorias de despesas", size=16, weight=ft.FontWeight.BOLD, color="#0F172A"),
-                            *(self._category_rows(top_categorias) or [ft.Text("Nenhuma despesa no mes atual.", color="#64748B")]),
+                            self._metric("Receitas do mes", resumo["receitas"], SUCCESS_COLOR),
+                            self._metric("Despesas do mes", resumo["despesas"], "#DC2626"),
+                            self._metric("Saldo do mes", resumo["saldo"], "#334155"),
+                            self._metric("Gasto no cartao", resumo["cartoes"], "#2563EB"),
                         ],
-                        spacing=12,
-                    )
-                ),
-            ],
-            spacing=20,
-            scroll=ft.ScrollMode.AUTO,
+                        wrap=True,
+                        spacing=16,
+                        run_spacing=16,
+                        vertical_alignment=ft.CrossAxisAlignment.START,
+                    ),
+                    card(
+                        ft.Column(
+                            [
+                                ft.Text("Top 3 categorias de despesas", size=16, weight=ft.FontWeight.BOLD, color="#0F172A"),
+                                *(self._category_rows(top_categorias) or [ft.Text("Nenhuma despesa no mes atual.", color="#64748B")]),
+                            ],
+                            spacing=12,
+                        )
+                    ),
+                ],
+                spacing=20,
+            ),
+            expand=True,
+            alignment=ft.alignment.top_left,
         )
 
     def _load_data(self) -> tuple[dict[str, float], list[dict]]:
@@ -67,7 +71,6 @@ class DashboardPage:
             )
         )
         metric.width = 245
-        metric.height = 120
         return metric
 
     def _category_rows(self, items: list[dict]) -> list[ft.Control]:

@@ -102,7 +102,7 @@ class ContasPage:
                     print(f"[GranaSimples][UI] Remover conta id={item['id']}")
                     action = self.service.remove(item["id"])
                     show_message(self.page, "Conta excluida." if action == "deleted" else "Conta inativada.")
-                    refresh_rows()
+                    self.refresh_app()
 
                 def alternar(item=item):
                     active = is_active_value(item["ativo"])

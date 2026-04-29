@@ -210,7 +210,6 @@ class LancamentosPage:
                         print(f"[GranaSimples][UI] Remover lançamento id={item['id']}")
                         self.service.remove(item["id"])
                         show_message(self.page, "Lancamento excluido.")
-                        refresh_list()
                         self.refresh_app()
                     except Exception as exc:
                         show_message(self.page, str(exc), True)
