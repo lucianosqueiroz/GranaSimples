@@ -8,13 +8,13 @@ from granasimples.ui.pages.dashboard_page import DashboardPage
 from granasimples.ui.pages.lancamentos_page import LancamentosPage
 from granasimples.ui.pages.pessoas_page import PessoasPage
 from granasimples.ui.pages.subcategorias_page import SubcategoriasPage
-from granasimples.ui.theme import apply_theme
+from granasimples.ui.theme import BORDER, CARD, FUNDO, ROXO, SUBTEXTO, TEXTO, apply_theme
 
 
 class GranaSimplesApp:
     def __init__(self, page: ft.Page) -> None:
         self.page = page
-        self.content = ft.Container(expand=True, padding=ft.padding.symmetric(horizontal=28, vertical=26))
+        self.content = ft.Container(expand=True, padding=ft.padding.symmetric(horizontal=28, vertical=26), bgcolor=FUNDO)
         self.selected_index = 0
 
     def build(self) -> None:
@@ -24,6 +24,10 @@ class GranaSimplesApp:
             label_type=ft.NavigationRailLabelType.ALL,
             min_width=96,
             min_extended_width=180,
+            bgcolor=CARD,
+            indicator_color=ROXO,
+            selected_label_text_style=ft.TextStyle(color=TEXTO, weight=ft.FontWeight.BOLD),
+            unselected_label_text_style=ft.TextStyle(color=SUBTEXTO),
             destinations=[
                 ft.NavigationRailDestination(icon=ft.Icons.DASHBOARD_OUTLINED, selected_icon=ft.Icons.DASHBOARD, label="Dashboard"),
                 ft.NavigationRailDestination(icon=ft.Icons.GROUP_OUTLINED, label="Pessoas"),
@@ -41,8 +45,8 @@ class GranaSimplesApp:
                 [
                     ft.Container(
                         self.rail,
-                        bgcolor=ft.Colors.WHITE,
-                        border=ft.border.only(right=ft.BorderSide(1, "#EEF2F7")),
+                        bgcolor=CARD,
+                        border=ft.border.only(right=ft.BorderSide(1, BORDER)),
                     ),
                     self.content,
                 ],

@@ -1,5 +1,7 @@
 import flet as ft
 
+from granasimples.ui.theme import BORDER, CARD, SUBTEXTO, TABLE_BG, TEXTO, VERDE, VERMELHO
+
 
 def dropdown_options(rows: list[dict], label_field: str = "nome") -> list[ft.dropdown.Option]:
     return [ft.dropdown.Option(str(row["id"]), str(row[label_field])) for row in rows]
@@ -7,18 +9,19 @@ def dropdown_options(rows: list[dict], label_field: str = "nome") -> list[ft.dro
 
 def show_message(page: ft.Page, message: str, error: bool = False) -> None:
     page.snack_bar = ft.SnackBar(
-        ft.Text(message),
-        bgcolor=ft.Colors.RED_600 if error else ft.Colors.GREEN_600,
+        ft.Text(message, color=TEXTO),
+        bgcolor=VERMELHO if error else VERDE,
     )
     page.snack_bar.open = True
     page.update()
 
 
 def section_title(title: str) -> ft.Text:
-    return ft.Text(title, size=30, weight=ft.FontWeight.BOLD, color="#0F172A")
+    return ft.Text(title, size=30, weight=ft.FontWeight.BOLD, color=TEXTO)
 
 
 def ellipsis_text(value: str, width: int | None = None, expand: bool = False, **kwargs) -> ft.Text:
+    kwargs.setdefault("color", TEXTO)
     return ft.Text(
         value,
         width=width,
@@ -31,15 +34,16 @@ def ellipsis_text(value: str, width: int | None = None, expand: bool = False, **
 
 
 def header_cell(value: str, width: int | None = None, expand: bool = False) -> ft.Text:
-    return ellipsis_text(value, width=width, expand=expand, weight=ft.FontWeight.BOLD, color="#475569", size=12)
+    return ellipsis_text(value, width=width, expand=expand, weight=ft.FontWeight.BOLD, color=SUBTEXTO, size=12)
 
 
 def table_header(cells: list[ft.Control]) -> ft.Container:
     return ft.Container(
         content=ft.Row(cells, spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-        bgcolor="#F8FAFC",
+        bgcolor=TABLE_BG,
         border_radius=8,
         padding=ft.padding.symmetric(horizontal=10, vertical=10),
+        border=ft.border.all(1, BORDER),
     )
 
 
@@ -55,11 +59,12 @@ def _normalize_filter_value(value: str | None) -> str:
 
 def status_label(active) -> ft.Container:
     is_active = is_active_value(active)
-    color = ft.Colors.GREEN_700 if is_active else ft.Colors.GREY_700
-    bgcolor = "#DCFCE7" if is_active else "#F3F4F6"
+    color = VERDE if is_active else SUBTEXTO
+    bgcolor = "#12251A" if is_active else CARD
     return ft.Container(
         ft.Text("Ativo" if is_active else "Inativo", size=12, color=color, weight=ft.FontWeight.BOLD),
         bgcolor=bgcolor,
+        border=ft.border.all(1, BORDER),
         border_radius=6,
         padding=ft.padding.symmetric(horizontal=8, vertical=4),
         width=76,
@@ -70,7 +75,7 @@ def edit_button(on_click) -> ft.IconButton:
     return ft.IconButton(
         ft.Icons.EDIT_OUTLINED,
         tooltip="Editar",
-        icon_color="#64748B",
+        icon_color=SUBTEXTO,
         icon_size=18,
         on_click=on_click,
     )
@@ -80,7 +85,7 @@ def delete_button(on_click) -> ft.IconButton:
     return ft.IconButton(
         ft.Icons.DELETE_OUTLINE,
         tooltip="Remover ou inativar",
-        icon_color="#94A3B8",
+        icon_color=SUBTEXTO,
         icon_size=18,
         on_click=on_click,
     )
@@ -91,7 +96,7 @@ def toggle_active_button(active, on_click) -> ft.IconButton:
     return ft.IconButton(
         ft.Icons.TOGGLE_ON_OUTLINED if is_active else ft.Icons.TOGGLE_OFF_OUTLINED,
         tooltip="Inativar registro" if is_active else "Reativar registro",
-        icon_color="#16A34A" if is_active else "#94A3B8",
+        icon_color=VERDE if is_active else SUBTEXTO,
         icon_size=20,
         on_click=on_click,
     )
@@ -133,8 +138,8 @@ def confirm_delete(
             ft.TextButton("Cancelar", on_click=lambda _: _close_dialog(page, dialog)),
             ft.ElevatedButton(
                 "Confirmar",
-                bgcolor=ft.Colors.RED_600,
-                color=ft.Colors.WHITE,
+                bgcolor=VERMELHO,
+                color=TEXTO,
                 on_click=lambda _: _confirm_and_close(page, dialog, on_confirm),
             ),
         ],

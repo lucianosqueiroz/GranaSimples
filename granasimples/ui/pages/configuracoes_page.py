@@ -2,7 +2,7 @@ import flet as ft
 
 from granasimples.services.configuracao_service import ConfiguracaoService
 from granasimples.ui.controls import section_title, show_message
-from granasimples.ui.theme import card, primary_button
+from granasimples.ui.theme import SUBTEXTO, TEXTO, card, primary_button
 
 
 class ConfiguracoesPage:
@@ -39,12 +39,12 @@ class ConfiguracoesPage:
                     card(
                         ft.Column(
                             [
-                                ft.Text("Padrões do sistema", size=16, weight=ft.FontWeight.BOLD),
+                                ft.Text("Padrões do sistema", size=16, weight=ft.FontWeight.BOLD, color=TEXTO),
                                 dias_fechamento,
                                 ft.Column(
                                     [
                                         percentual_alerta,
-                                        ft.Text("Informe apenas o número. Exemplo: 80 para 80%.", size=12, color="#6B7280"),
+                                        ft.Text("Informe apenas o número. Exemplo: 80 para 80%.", size=12, color=SUBTEXTO),
                                     ],
                                     spacing=4,
                                 ),

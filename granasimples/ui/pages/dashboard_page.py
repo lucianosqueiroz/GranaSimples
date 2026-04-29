@@ -1,7 +1,7 @@
 import flet as ft
 
 from granasimples.services.dashboard_service import DashboardService
-from granasimples.ui.theme import money
+from granasimples.ui.theme import BORDER, CARD, ROXO, SUBTEXTO, TEXTO, VERDE, VERMELHO, money
 
 
 class DashboardPage:
@@ -15,14 +15,14 @@ class DashboardPage:
 
         return ft.Column(
             [
-                ft.Text("GranaSimples", size=30, weight=ft.FontWeight.BOLD, color="#0F172A"),
-                ft.Text("Controle financeiro simples, rapido e sem complicacao.", color="#64748B", size=15),
+                ft.Text("GranaSimples", size=30, weight=ft.FontWeight.BOLD, color=TEXTO),
+                ft.Text("Controle financeiro simples, rapido e sem complicacao.", color=SUBTEXTO, size=15),
                 ft.Row(
                     [
-                        self._metric_panel("Receitas do mes", resumo["receitas"], "#16A34A"),
-                        self._metric_panel("Despesas do mes", resumo["despesas"], "#DC2626"),
-                        self._metric_panel("Saldo do mes", resumo["saldo"], "#334155"),
-                        self._metric_panel("Gasto no cartao", resumo["cartoes"], "#2563EB"),
+                        self._metric_panel("Receitas do mes", resumo["receitas"], VERDE),
+                        self._metric_panel("Despesas do mes", resumo["despesas"], VERMELHO),
+                        self._metric_panel("Saldo do mes", resumo["saldo"], TEXTO),
+                        self._metric_panel("Gasto no cartao", resumo["cartoes"], ROXO),
                     ],
                     spacing=16,
                     run_spacing=16,
@@ -52,13 +52,13 @@ class DashboardPage:
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Text(title, color="#64748B", size=13, weight=ft.FontWeight.W_500),
+                    ft.Text(title, color=SUBTEXTO, size=13, weight=ft.FontWeight.W_500),
                     ft.Text(money(value), color=color, size=27, weight=ft.FontWeight.BOLD),
                 ],
                 spacing=10,
             ),
-            bgcolor=ft.Colors.WHITE,
-            border=ft.border.all(1, "#E5E7EB"),
+            bgcolor=CARD,
+            border=ft.border.all(1, BORDER),
             border_radius=12,
             padding=20,
             width=245,
@@ -69,13 +69,13 @@ class DashboardPage:
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Text("Top 3 categorias", size=16, weight=ft.FontWeight.BOLD, color="#0F172A"),
-                    *(rows or [ft.Text("Nenhuma despesa no mes atual.", color="#64748B")]),
+                    ft.Text("Top 3 categorias", size=16, weight=ft.FontWeight.BOLD, color=TEXTO),
+                    *(rows or [ft.Text("Nenhuma despesa no mes atual.", color=SUBTEXTO)]),
                 ],
                 spacing=12,
             ),
-            bgcolor=ft.Colors.WHITE,
-            border=ft.border.all(1, "#E5E7EB"),
+            bgcolor=CARD,
+            border=ft.border.all(1, BORDER),
             border_radius=12,
             padding=20,
         )
@@ -86,8 +86,8 @@ class DashboardPage:
             rows.append(
                 ft.Row(
                     [
-                        ft.Text(str(item["nome"]), expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, color="#334155"),
-                        ft.Text(money(item["total"]), color="#DC2626", weight=ft.FontWeight.BOLD),
+                        ft.Text(str(item["nome"]), expand=True, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, color=TEXTO),
+                        ft.Text(money(item["total"]), color=VERMELHO, weight=ft.FontWeight.BOLD),
                     ],
                     spacing=12,
                     vertical_alignment=ft.CrossAxisAlignment.CENTER,

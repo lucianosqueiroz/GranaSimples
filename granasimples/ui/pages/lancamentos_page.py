@@ -9,8 +9,8 @@ from granasimples.services.conta_service import ContaService
 from granasimples.services.lancamento_service import LancamentoService
 from granasimples.services.pessoa_service import PessoaService
 from granasimples.services.subcategoria_service import SubcategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import SUCCESS_COLOR, card, money, primary_button
+from granasimples.ui.controls import confirm_delete, delete_button, dropdown_options, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.theme import BORDER, SUCCESS_COLOR, SUBTEXTO, TEXTO, VERMELHO, card, money, primary_button
 
 
 def data_br(value: str | None = None) -> str:
@@ -46,6 +46,10 @@ class LancamentosPage:
         self.cartoes = CartaoService()
         self.pessoas = PessoaService()
         self.list_container = ft.Column(spacing=6, scroll=ft.ScrollMode.AUTO)
+        self._render_list = lambda: None
+
+    def _on_filter_change(self, e):
+        self._render_list()
 
     def build(self) -> ft.Control:
         tipo = ft.Dropdown(
@@ -169,40 +173,11 @@ class LancamentosPage:
                     ]
                 )
             ]
-            items = self.service.list_all(False)
-            status = (filtro_status.value or "ativos").strip().lower()
-            if status == "ativos":
-                items = [item for item in items if is_active_value(item.get("ativo", 1))]
-            elif status == "inativos":
-                items = [item for item in items if not is_active_value(item.get("ativo", 1))]
-
-            tipo_filtro = (filtro_tipo.value or "").strip().lower()
-            if tipo_filtro and tipo_filtro != "todos":
-                items = [item for item in items if str(item.get("tipo", "")).strip().lower() == tipo_filtro]
-
-            texto = (filtro_texto.value or "").lower().strip()
-            if texto:
-                items = [
-                    item
-                    for item in items
-                    if texto
-                    in " ".join(
-                        str(value).lower()
-                        for value in [
-                            item["categoria_nome"],
-                            item["subcategoria_nome"],
-                            item["descricao"],
-                            item["conta_nome"],
-                            item["cartao_nome"],
-                            item["meio_financeiro"],
-                        ]
-                        if value
-                    )
-                ]
+            items = filter_rows(self.service.list_all(False), filtro_texto.value, filtro_tipo.value, filtro_status.value)
             for item in items:
                 sinal = "+" if item["tipo"] == TIPO_RECEITA else "-"
-                color = SUCCESS_COLOR if item["tipo"] == TIPO_RECEITA else "#DC2626"
-                bg_color = "#F0FDF4" if item["tipo"] == TIPO_RECEITA else "#FEF2F2"
+                color = SUCCESS_COLOR if item["tipo"] == TIPO_RECEITA else VERMELHO
+                bg_color = "#12251A" if item["tipo"] == TIPO_RECEITA else "#2A1215"
                 destino = item["conta_nome"] if item["meio_financeiro"] == MEIO_CONTA else item["cartao_nome"]
 
                 def remover(item=item):
@@ -228,7 +203,7 @@ class LancamentosPage:
                     ft.Container(
                         content=ft.Row(
                             [
-                                ellipsis_text(data_br(item["data"]), width=92, color="#374151"),
+                                ellipsis_text(data_br(item["data"]), width=92, color=SUBTEXTO),
                                 ft.Container(
                                     ft.Text(item["tipo"], color=color, size=12, weight=ft.FontWeight.BOLD),
                                     bgcolor=bg_color,
@@ -237,8 +212,8 @@ class LancamentosPage:
                                     width=82,
                                 ),
                                 ellipsis_text(item["categoria_nome"], width=130, weight=ft.FontWeight.W_500),
-                                ellipsis_text(item["subcategoria_nome"] or "-", width=120, color="#6B7280"),
-                                ellipsis_text(destino or item["meio_financeiro"], expand=True, color="#374151"),
+                                ellipsis_text(item["subcategoria_nome"] or "-", width=120, color=SUBTEXTO),
+                                ellipsis_text(destino or item["meio_financeiro"], expand=True, color=TEXTO),
                                 ellipsis_text(f"{sinal} {money(item['valor'])}", width=130, color=color, weight=ft.FontWeight.BOLD),
                                 status_label(item["ativo"]),
                                 toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
@@ -247,7 +222,7 @@ class LancamentosPage:
                             vertical_alignment=ft.CrossAxisAlignment.CENTER,
                         ),
                         padding=ft.padding.symmetric(vertical=8),
-                        border=ft.border.only(bottom=ft.BorderSide(1, "#E5E7EB")),
+                        border=ft.border.only(bottom=ft.BorderSide(1, BORDER)),
                     )
                 )
             if len(rows) == 1:
@@ -301,9 +276,12 @@ class LancamentosPage:
         meio.on_change = on_meio_change
         categoria.on_change = on_categoria_change
         valor.on_blur = on_valor_blur
-        filtro_texto.on_change = lambda _: refresh_list()
-        filtro_tipo.on_change = lambda _: refresh_list()
-        filtro_status.on_change = lambda _: refresh_list()
+        self._render_list = refresh_list
+        filtro_texto.on_change = self._on_filter_change
+        filtro_tipo.on_change = self._on_filter_change
+        filtro_tipo.on_select = self._on_filter_change
+        filtro_status.on_change = self._on_filter_change
+        filtro_status.on_select = self._on_filter_change
 
         update_dynamic_fields(update_page=False)
         refresh_list(update_page=False)
@@ -354,7 +332,7 @@ class LancamentosPage:
                         card(
                             ft.Column(
                                 [
-                                    ft.Text("Últimos lançamentos", weight=ft.FontWeight.BOLD, size=16),
+                                    ft.Text("Últimos lançamentos", weight=ft.FontWeight.BOLD, size=16, color=TEXTO),
                                     ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10),
                                     self.list_container,
                                 ],

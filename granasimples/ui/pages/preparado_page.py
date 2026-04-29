@@ -1,7 +1,7 @@
 import flet as ft
 
 from granasimples.ui.controls import section_title
-from granasimples.ui.theme import card
+from granasimples.ui.theme import SUBTEXTO, card
 
 
 class PreparadoPage:
@@ -13,7 +13,7 @@ class PreparadoPage:
         return ft.Column(
             [
                 section_title(self.title),
-                card(ft.Text(self.description, color="#4B5563")),
+                card(ft.Text(self.description, color=SUBTEXTO)),
             ],
             spacing=16,
         )

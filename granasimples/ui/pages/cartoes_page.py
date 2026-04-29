@@ -1,7 +1,7 @@
 import flet as ft
 
 from granasimples.services.cartao_service import CartaoService
-from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
 from granasimples.ui.theme import card, money, primary_button
 
 
@@ -11,6 +11,10 @@ class CartoesPage:
         self.refresh_app = refresh_app
         self.service = CartaoService()
         self.editing_id: int | None = None
+        self._render_list = lambda: None
+
+    def _on_filter_change(self, e):
+        self._render_list()
 
     def build(self) -> ft.Control:
         nome = ft.TextField(label="Nome", width=320)
@@ -53,16 +57,7 @@ class CartoesPage:
                     ]
                 )
             ]
-            items = self.service.list_with_limite_usado(False)
-            status = (filtro_status.value or "ativos").strip().lower()
-            if status == "ativos":
-                items = [item for item in items if is_active_value(item.get("ativo", 1))]
-            elif status == "inativos":
-                items = [item for item in items if not is_active_value(item.get("ativo", 1))]
-
-            texto = (filtro_texto.value or "").strip().lower()
-            if texto:
-                items = [item for item in items if texto in " ".join(str(value).lower() for value in item.values() if value is not None)]
+            items = filter_rows(self.service.list_with_limite_usado(False), filtro_texto.value, "", filtro_status.value)
             for item in items:
                 def editar(_, item=item):
                     self.editing_id = item["id"]
@@ -118,8 +113,10 @@ class CartoesPage:
                 show_message(self.page, str(exc), True)
 
         vencimento.on_change = atualizar_fechamento
-        filtro_texto.on_change = lambda _: refresh_rows()
-        filtro_status.on_change = lambda _: refresh_rows()
+        self._render_list = refresh_rows
+        filtro_texto.on_change = self._on_filter_change
+        filtro_status.on_change = self._on_filter_change
+        filtro_status.on_select = self._on_filter_change
         refresh_rows(False)
 
         return ft.Column(
