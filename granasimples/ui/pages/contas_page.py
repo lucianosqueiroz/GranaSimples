@@ -2,8 +2,8 @@ import flet as ft
 
 from granasimples.services.conta_service import ContaService
 from granasimples.services.base_service import parse_float
-from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import card, field_width, form_width, money, primary_button, responsive_form_list_layout, style_form_controls
+from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, mobile_record_card, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.theme import card, field_width, fit_mobile_controls, form_width, is_mobile, money, primary_button, responsive_form_list_layout, style_form_controls
 
 
 class ContasPage:
@@ -52,6 +52,7 @@ class ContasPage:
         nome.width = field_width(self.page)
         tipo.width = field_width(self.page)
         saldo.width = field_width(self.page)
+        fit_mobile_controls(self.page, [nome, tipo, saldo, filtro_texto, filtro_tipo, filtro_status])
 
         def formatar_saldo(_):
             try:
@@ -73,7 +74,8 @@ class ContasPage:
         rows_column = ft.Column(spacing=8, scroll=ft.ScrollMode.AUTO)
 
         def refresh_rows(update_page: bool = True):
-            rows = [
+            mobile = is_mobile(self.page)
+            rows = [] if mobile else [
                 table_header(
                     [
                         header_cell("Nome", expand=True),
@@ -105,21 +107,29 @@ class ContasPage:
                     show_message(self.page, "Registro reativado." if not active else "Registro inativado.")
                     refresh_rows()
 
-                rows.append(
-                    ft.Row(
-                        [
-                            ellipsis_text(item["nome"], expand=True),
-                            ellipsis_text(item["tipo"], width=100),
-                            ellipsis_text(money(item["saldo_atual"]), width=130),
-                            status_label(item["ativo"]),
-                            edit_button(editar),
-                            toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
-                            delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
-                        ],
-                        spacing=8,
+                actions = [
+                    edit_button(editar),
+                    toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
+                    delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
+                ]
+                if mobile:
+                    rows.append(
+                        mobile_record_card(item["nome"], [("Tipo", item["tipo"]), ("Saldo", money(item["saldo_atual"]))], item["ativo"], actions)
                     )
-                )
-            if len(rows) == 1:
+                else:
+                    rows.append(
+                        ft.Row(
+                            [
+                                ellipsis_text(item["nome"], expand=True),
+                                ellipsis_text(item["tipo"], width=100),
+                                ellipsis_text(money(item["saldo_atual"]), width=130),
+                                status_label(item["ativo"]),
+                                *actions,
+                            ],
+                            spacing=8,
+                        )
+                    )
+            if not items:
                 rows.append(ft.Text("Nenhuma conta cadastrada."))
             rows_column.controls = rows
             if update_page:

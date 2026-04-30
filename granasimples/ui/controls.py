@@ -47,6 +47,50 @@ def table_header(cells: list[ft.Control]) -> ft.Container:
     )
 
 
+def detail_row(label: str, value: str, value_color: str = TEXTO) -> ft.Row:
+    return ft.Row(
+        [
+            ft.Text(label, color=SUBTEXTO, size=12, width=94),
+            ft.Text(value, color=value_color, size=13, expand=True, no_wrap=False),
+        ],
+        spacing=8,
+        vertical_alignment=ft.CrossAxisAlignment.START,
+    )
+
+
+def mobile_record_card(title: str, details: list[tuple[str, str] | tuple[str, str, str]], status, actions: list[ft.Control]) -> ft.Container:
+    detail_controls: list[ft.Control] = []
+    for detail in details:
+        if len(detail) == 3:
+            label, value, color = detail
+        else:
+            label, value = detail
+            color = TEXTO
+        detail_controls.append(detail_row(label, value, color))
+
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Row(
+                    [
+                        ft.Text(title, color=TEXTO, size=15, weight=ft.FontWeight.BOLD, expand=True),
+                        status_label(status),
+                    ],
+                    spacing=10,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                ),
+                *detail_controls,
+                ft.Row(actions, spacing=4, alignment=ft.MainAxisAlignment.END),
+            ],
+            spacing=10,
+        ),
+        bgcolor=CARD,
+        border=ft.border.all(1, BORDER),
+        border_radius=10,
+        padding=14,
+    )
+
+
 def is_active_value(value) -> bool:
     if isinstance(value, str):
         return value.strip().lower() not in {"0", "false", "falso", "inativo", "inactive", "no", "nao", ""}

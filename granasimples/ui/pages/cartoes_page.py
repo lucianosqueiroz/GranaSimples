@@ -1,8 +1,8 @@
 import flet as ft
 
 from granasimples.services.cartao_service import CartaoService
-from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import card, field_width, form_width, money, primary_button, responsive_form_list_layout, style_form_controls
+from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, mobile_record_card, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.theme import card, field_width, fit_mobile_controls, form_width, is_mobile, money, primary_button, responsive_form_list_layout, style_form_controls
 
 
 class CartoesPage:
@@ -37,6 +37,7 @@ class CartoesPage:
         nome.width = field_width(self.page)
         digitos.width = field_width(self.page)
         limite.width = field_width(self.page)
+        fit_mobile_controls(self.page, [nome, digitos, vencimento, fechamento, limite, filtro_texto, filtro_status])
         rows_column = ft.Column(spacing=8, scroll=ft.ScrollMode.AUTO)
 
         def atualizar_fechamento(_=None):
@@ -47,7 +48,8 @@ class CartoesPage:
             self.page.update()
 
         def refresh_rows(update_page: bool = True):
-            rows = [
+            mobile = is_mobile(self.page)
+            rows = [] if mobile else [
                 table_header(
                     [
                         header_cell("Nome", expand=True),
@@ -84,6 +86,28 @@ class CartoesPage:
                     show_message(self.page, "Registro reativado." if not active else "Registro inativado.")
                     refresh_rows()
 
+                actions = [
+                    edit_button(editar),
+                    toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
+                    delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
+                ]
+                if mobile:
+                    rows.append(
+                        mobile_record_card(
+                            item["nome"],
+                            [
+                                ("Final", item["ultimos_digitos"]),
+                                ("Vencimento", str(item["dia_vencimento"])),
+                                ("Fechamento", str(item["dia_fechamento"])),
+                                ("Limite", money(item["limite_total"])),
+                                ("Usado", money(item["limite_usado"])),
+                            ],
+                            item["ativo"],
+                            actions,
+                        )
+                    )
+                    continue
+
                 rows.append(
                     ft.Row(
                         [
@@ -94,15 +118,13 @@ class CartoesPage:
                             ellipsis_text(money(item["limite_total"]), width=112),
                             ellipsis_text(money(item["limite_usado"]), width=112),
                             status_label(item["ativo"]),
-                            edit_button(editar),
-                            toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
-                            delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
+                            *actions,
                         ],
                         spacing=8,
                         vertical_alignment=ft.CrossAxisAlignment.CENTER,
                     )
                 )
-            if len(rows) == 1:
+            if not items:
                 rows.append(ft.Text("Nenhum cartão cadastrado."))
             rows_column.controls = rows
             if update_page:

@@ -33,7 +33,7 @@ def is_tablet(page: ft.Page) -> bool:
 
 def content_padding(page: ft.Page) -> int:
     if is_mobile(page):
-        return 12
+        return 16
     if is_tablet(page):
         return 18
     return 24
@@ -49,6 +49,14 @@ def field_width(page: ft.Page, desktop: int = 320) -> int | None:
     if is_tablet(page):
         return min(desktop, 300)
     return desktop
+
+
+def fit_mobile_controls(page: ft.Page, controls: list[ft.Control]) -> None:
+    if not is_mobile(page):
+        return
+    for control in controls:
+        if isinstance(control, (ft.TextField, ft.Dropdown)):
+            control.width = None
 
 
 def form_width(page: ft.Page, desktop: int = 380) -> int | None:
@@ -124,8 +132,8 @@ def secondary_button(text: str, on_click, icon=None, width: int = 180) -> ft.Out
 def style_form_controls(controls: list[ft.Control]) -> None:
     for control in controls:
         if isinstance(control, (ft.TextField, ft.Dropdown)):
-            control.height = max(control.height or 0, 58)
-            control.content_padding = ft.padding.only(left=12, right=12, top=16, bottom=10)
+            control.height = max(control.height or 0, 68)
+            control.content_padding = ft.padding.only(left=12, right=12, top=24, bottom=12)
 
 
 def money(value: float | int | None) -> str:

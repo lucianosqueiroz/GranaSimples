@@ -9,8 +9,8 @@ from granasimples.services.conta_service import ContaService
 from granasimples.services.lancamento_service import LancamentoService
 from granasimples.services.pessoa_service import PessoaService
 from granasimples.services.subcategoria_service import SubcategoriaService
-from granasimples.ui.controls import dropdown_options, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import BORDER, SUCCESS_COLOR, SUBTEXTO, TEXTO, VERMELHO, card, field_width, form_width, is_mobile, money, primary_button, responsive_form_list_layout, secondary_button, style_form_controls
+from granasimples.ui.controls import dropdown_options, ellipsis_text, filter_rows, header_cell, is_active_value, mobile_record_card, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.theme import BORDER, SUCCESS_COLOR, SUBTEXTO, TEXTO, VERMELHO, card, field_width, fit_mobile_controls, form_width, is_mobile, money, primary_button, responsive_form_list_layout, secondary_button, style_form_controls
 
 
 def data_br(value: str | None = None) -> str:
@@ -33,6 +33,17 @@ def format_money_input(value: str | None) -> str:
     except ValueError:
         return value or ""
     return money(number)
+
+
+def data_filtro_iso(value: str | None) -> str | None:
+    text = (value or "").strip()
+    if len(text) != 10:
+        return None
+    try:
+        dia, mes, ano = text.split("/")
+        return date(int(ano), int(mes), int(dia)).isoformat()
+    except ValueError:
+        return None
 
 
 class LancamentosPage:
@@ -98,6 +109,8 @@ class LancamentosPage:
             ],
             width=130,
         )
+        filtro_data_inicio = ft.TextField(label="Data inicial", hint_text="DD/MM/AAAA", width=140)
+        filtro_data_fim = ft.TextField(label="Data final", hint_text="DD/MM/AAAA", width=140)
 
         fields = [
             tipo,
@@ -114,17 +127,38 @@ class LancamentosPage:
         ]
         for field in fields:
             field.width = field_width(self.page)
-        style_form_controls(fields + [filtro_texto, filtro_tipo, filtro_status])
+        fit_mobile_controls(self.page, fields + [filtro_texto, filtro_tipo, filtro_status, filtro_data_inicio, filtro_data_fim])
+        style_form_controls(fields + [filtro_texto, filtro_tipo, filtro_status, filtro_data_inicio, filtro_data_fim])
+        tipo.height = 76
         observacoes.height = 96
 
-        def update_dynamic_fields(update_page: bool = True) -> None:
-            if tipo.value == TIPO_RECEITA:
+        def selected_tipo() -> str:
+            value = str(tipo.value or TIPO_DESPESA).strip().lower()
+            if value not in {TIPO_RECEITA, TIPO_DESPESA}:
+                value = TIPO_DESPESA
+            tipo.value = value
+            return value
+
+        def categorias_por_tipo(tipo_value: str) -> list[dict]:
+            tipo_normalizado = str(tipo_value or "").strip().lower()
+            return [
+                item
+                for item in self.categorias.list_all()
+                if str(item.get("tipo", "")).strip().lower() == tipo_normalizado
+            ]
+
+        def update_dynamic_fields(update_page: bool = True, novo_tipo: str | None = None) -> None:
+            if novo_tipo is not None:
+                tipo.value = str(novo_tipo).strip().lower()
+            tipo_value = selected_tipo()
+            if tipo_value == TIPO_RECEITA:
                 meio.value = MEIO_CONTA
                 meio.disabled = True
             else:
                 meio.disabled = False
 
-            categoria.options = dropdown_options(self.categorias.list_by_tipo(tipo.value))
+            categorias_filtradas = categorias_por_tipo(tipo_value)
+            categoria.options = dropdown_options(categorias_filtradas)
             if categoria.value and not any(option.key == categoria.value for option in categoria.options):
                 categoria.value = None
 
@@ -142,6 +176,11 @@ class LancamentosPage:
             cartao.visible = meio.value == MEIO_CARTAO
 
             if update_page:
+                for control in [tipo, meio, categoria, subcategoria, pessoa, conta, cartao]:
+                    try:
+                        control.update()
+                    except Exception:
+                        pass
                 self.page.update()
 
         def reset_form(update_page: bool = False) -> None:
@@ -161,7 +200,8 @@ class LancamentosPage:
                 self.page.update()
 
         def refresh_list(update_page: bool = True) -> None:
-            rows = [
+            mobile = is_mobile(self.page)
+            rows = [] if mobile else [
                 table_header(
                     [
                         header_cell("Data", width=92),
@@ -176,6 +216,12 @@ class LancamentosPage:
                 )
             ]
             items = filter_rows(self.service.list_all(False), filtro_texto.value, filtro_tipo.value, filtro_status.value)
+            data_inicio = data_filtro_iso(filtro_data_inicio.value)
+            data_fim = data_filtro_iso(filtro_data_fim.value)
+            if data_inicio:
+                items = [item for item in items if item["data"] >= data_inicio]
+            if data_fim:
+                items = [item for item in items if item["data"] <= data_fim]
             for item in items:
                 sinal = "+" if item["tipo"] == TIPO_RECEITA else "-"
                 color = SUCCESS_COLOR if item["tipo"] == TIPO_RECEITA else VERMELHO
@@ -191,6 +237,25 @@ class LancamentosPage:
                         self.refresh_app()
                     except Exception as exc:
                         show_message(self.page, str(exc), True)
+
+                actions = [toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar())]
+                if mobile:
+                    rows.append(
+                        mobile_record_card(
+                            item["descricao"] or item["categoria_nome"],
+                            [
+                                ("Data", data_br(item["data"])),
+                                ("Tipo", item["tipo"], color),
+                                ("Categoria", item["categoria_nome"]),
+                                ("Subcat.", item["subcategoria_nome"] or "-"),
+                                ("Meio", destino or item["meio_financeiro"]),
+                                ("Valor", f"{sinal} {money(item['valor'])}", color),
+                            ],
+                            item["ativo"],
+                            actions,
+                        )
+                    )
+                    continue
 
                 rows.append(
                     ft.Container(
@@ -209,7 +274,7 @@ class LancamentosPage:
                                 ellipsis_text(destino or item["meio_financeiro"], expand=True, color=TEXTO),
                                 ellipsis_text(f"{sinal} {money(item['valor'])}", width=118, color=color, weight=ft.FontWeight.BOLD),
                                 ft.Container(status_label(item["ativo"]), width=88),
-                                toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
+                                *actions,
                             ],
                             spacing=10,
                             vertical_alignment=ft.CrossAxisAlignment.CENTER,
@@ -218,16 +283,18 @@ class LancamentosPage:
                         border=ft.border.only(bottom=ft.BorderSide(1, BORDER)),
                     )
                 )
-            if len(rows) == 1:
+            if not items:
                 rows.append(ft.Text("Nenhum lançamento cadastrado."))
             self.list_container.controls = rows
             if update_page:
                 self.page.update()
 
-        def on_tipo_change(_):
+        def on_tipo_change(event):
+            novo_tipo = getattr(event.control, "value", None) if event else tipo.value
             categoria.value = None
             subcategoria.value = ""
-            update_dynamic_fields()
+            subcategoria.options = [ft.dropdown.Option("", "Sem subcategoria")]
+            update_dynamic_fields(novo_tipo=novo_tipo)
 
         def on_categoria_change(_):
             subcategoria.value = ""
@@ -266,8 +333,11 @@ class LancamentosPage:
             reset_form(update_page=True)
 
         tipo.on_change = on_tipo_change
+        tipo.on_select = on_tipo_change
         meio.on_change = on_meio_change
+        meio.on_select = on_meio_change
         categoria.on_change = on_categoria_change
+        categoria.on_select = on_categoria_change
         valor.on_blur = on_valor_blur
         self._render_list = refresh_list
         filtro_texto.on_change = self._on_filter_change
@@ -275,6 +345,8 @@ class LancamentosPage:
         filtro_tipo.on_select = self._on_filter_change
         filtro_status.on_change = self._on_filter_change
         filtro_status.on_select = self._on_filter_change
+        filtro_data_inicio.on_change = self._on_filter_change
+        filtro_data_fim.on_change = self._on_filter_change
 
         update_dynamic_fields(update_page=False)
         refresh_list(update_page=False)
@@ -285,6 +357,7 @@ class LancamentosPage:
                     ft.Container(
                         ft.Column(
                             [
+                                ft.Container(height=8),
                                 tipo,
                                 meio,
                                 data_lancamento,
@@ -301,6 +374,7 @@ class LancamentosPage:
                             scroll=ft.ScrollMode.AUTO,
                         ),
                         height=360 if is_mobile(self.page) else 450,
+                        padding=ft.padding.only(top=12),
                     ),
                     ft.Row(
                         [
@@ -326,7 +400,7 @@ class LancamentosPage:
             ft.Column(
                 [
                     ft.Text("Últimos lançamentos", weight=ft.FontWeight.BOLD, size=16, color=TEXTO),
-                    ft.Row([filtro_texto, filtro_tipo, filtro_status], wrap=True, spacing=10),
+                    ft.Row([filtro_texto, filtro_tipo, filtro_status, filtro_data_inicio, filtro_data_fim], wrap=True, spacing=10),
                     self.list_container,
                 ],
                 spacing=12,

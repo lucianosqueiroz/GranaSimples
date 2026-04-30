@@ -2,8 +2,8 @@ import flet as ft
 
 from granasimples.core.constants import TIPO_DESPESA, TIPO_RECEITA
 from granasimples.services.categoria_service import CategoriaService
-from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, section_title, show_message, status_label, table_header, toggle_active_button
-from granasimples.ui.theme import card, field_width, form_width, primary_button, responsive_form_list_layout, style_form_controls
+from granasimples.ui.controls import confirm_delete, delete_button, edit_button, ellipsis_text, filter_rows, header_cell, is_active_value, mobile_record_card, section_title, show_message, status_label, table_header, toggle_active_button
+from granasimples.ui.theme import card, field_width, fit_mobile_controls, form_width, is_mobile, primary_button, responsive_form_list_layout, style_form_controls
 
 
 class CategoriasPage:
@@ -45,6 +45,7 @@ class CategoriasPage:
         style_form_controls([nome, tipo, filtro_texto, filtro_tipo, filtro_status])
         nome.width = field_width(self.page)
         tipo.width = field_width(self.page, 180)
+        fit_mobile_controls(self.page, [nome, tipo, filtro_texto, filtro_tipo, filtro_status])
 
         def salvar(_):
             try:
@@ -57,7 +58,8 @@ class CategoriasPage:
         rows_column = ft.Column(spacing=8, scroll=ft.ScrollMode.AUTO)
 
         def refresh_rows(update_page: bool = True):
-            rows = [
+            mobile = is_mobile(self.page)
+            rows = [] if mobile else [
                 table_header(
                     [
                         header_cell("Nome", expand=True),
@@ -87,20 +89,28 @@ class CategoriasPage:
                     show_message(self.page, "Registro reativado." if not active else "Registro inativado.")
                     refresh_rows()
 
-                rows.append(
-                    ft.Row(
-                        [
-                            ellipsis_text(item["nome"], expand=True),
-                            ellipsis_text(item["tipo"], width=100),
-                            status_label(item["ativo"]),
-                            edit_button(editar),
-                            toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
-                            delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
-                        ],
-                        spacing=8,
+                actions = [
+                    edit_button(editar),
+                    toggle_active_button(item["ativo"], lambda _, alternar=alternar: alternar()),
+                    delete_button(lambda _, remover=remover: confirm_delete(self.page, remover)),
+                ]
+                if mobile:
+                    rows.append(
+                        mobile_record_card(item["nome"], [("Tipo", item["tipo"])], item["ativo"], actions)
                     )
-                )
-            if len(rows) == 1:
+                else:
+                    rows.append(
+                        ft.Row(
+                            [
+                                ellipsis_text(item["nome"], expand=True),
+                                ellipsis_text(item["tipo"], width=100),
+                                status_label(item["ativo"]),
+                                *actions,
+                            ],
+                            spacing=8,
+                        )
+                    )
+            if not items:
                 rows.append(ft.Text("Nenhuma categoria cadastrada."))
             rows_column.controls = rows
             if update_page:
